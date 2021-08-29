@@ -1,0 +1,5 @@
+Sphinx>=1.8.0
+nbsphinx>=0.8.0
+ipykernel
+# Theme
+sphinx-rtd-theme==0.2.4
