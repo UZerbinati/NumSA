@@ -4,8 +4,64 @@
    "cell_type": "markdown",
    "metadata": {},
    "source": [
-    "# NumSA"
+    "# NumSA\n",
+    "NumSA is a highly modular numerical analysis toolbox I developed during my stay at, King Abdullah University Of Science and Technology 2020.\n",
+    "NumSA rely on the following dependencies to work:\n",
+    "- PyBind11, this it the C++ Python binder, more info [here](https://pybind11.readthedocs.io/en/stable/),\n",
+    "- Eigen, this is the linear algebra library we decied to use, more info [here](https://eigen.tuxfamily.org/),\n",
+    "- QHull, this library is used to compute Deluny triangulation, more info [here](http://www.qhull.org/),\n",
+    "- libDistMesh, this library is used to generate the mesh, using the distMesh algorithm, more info [here](https://people.sc.fsu.edu/~jburkardt/m_src/distmesh/distmesh.html) and [here](https://github.com/pgebhardt/libdistmesh)."
    ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Getting Started\n",
+    "### PyBind11\n",
+    "To compile pybind11 move in the pybind11 folder (dep/pybind11) and use the following commands,\n",
+    "```\n",
+    "mkdir build\n",
+    "cd build\n",
+    "cmake ..\n",
+    "make check -j 4\n",
+    "```\n",
+    "### Eigen\n",
+    "To compile QHull move in the pybind11 folder (dep/QHull) and use the following commands,\n",
+    "```\n",
+    "mkdir build\n",
+    "cd build\n",
+    "cmake ..\n",
+    "make install\n",
+    "```\n",
+    "last operation might require root privileges.\n",
+    "### QHull\n",
+    "To compile QHull move in the pybind11 folder (dep/QHull) and use the following commands,\n",
+    "```\n",
+    "cd build\n",
+    "cmake ..\n",
+    "make\n",
+    "make install\n",
+    "```\n",
+    "last operation might require root privileges.\n",
+    "\n",
+    "### libDistMesh\n",
+    "To compile QHull move in the pybind11 folder (dep/QHull) and use the following commands,\n",
+    "```\n",
+    "cd build\n",
+    "cmake ..\n",
+    "make\n",
+    "make install\n",
+    "```\n",
+    "last operation might require root privileges."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
   }
  ],
  "metadata": {

@@ -2,10 +2,6 @@
 	path = dep/pybind11
 	url = https://github.com/pybind/pybind11.git
 	branch = stable
-[submodule "dep/qhull"]
-	path = dep/qhull
-	url = https://github.com/qhull/qhull.git
-	branch = master
 [submodule "dep/eigen"]
 	path = dep/eigen
 	url = https://gitlab.com/libeigen/eigen.git
