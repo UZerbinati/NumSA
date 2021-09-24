@@ -8,7 +8,8 @@ setup(
     author_email='umberto.zerbinati@kaust.edu.sa',
     license='LPGL',
     packages=['numsa'],
-    install_requires=['pygmsh',
+    install_requires=['pynumpy',
+    		  'pygmsh',
     		  'pytest',
     		  'tensorflow'],
 )

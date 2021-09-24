@@ -4,9 +4,8 @@ dist: bionic
 compiler: g++
 before_install: 
         - pyenv global 3.8
-        - pip install pybind11
-        - pip install pytest
-        - pip install numpy
+        - cd py
+        - pip3 install .
 script: 
         - cd tests
         - pytest
