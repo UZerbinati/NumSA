@@ -9,6 +9,7 @@ setup(
     license='LPGL',
     packages=['numsa'],
     install_requires=['numpy~=1.19.2',
+    		  'matplotlib',
     		  'pygmsh',
     		  'pytest',
     		  'tensorflow'],
