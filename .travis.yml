@@ -7,7 +7,6 @@ before_install:
         - pip install pybind11
         - pip install pytest
         - pip install numpy
-        - pip install tensorflow
 script: 
         - cd tests
         - pytest
