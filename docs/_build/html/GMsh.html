@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>NumSA &#8212; NumSA 0.0.1 documentation</title>
+    <title>&lt;no title&gt; &#8212; NumSA 0.0.1 documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
@@ -19,8 +19,6 @@
     <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "tex2jax_ignore|mathjax_ignore|document", "processClass": "tex2jax_process|mathjax_process|math|output_area"}})</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="TensorFlow" href="TensorFlow/index.html" />
-    <link rel="prev" title="Welcome to Suite’s documentation!" href="index.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
@@ -282,50 +280,55 @@ div.rendered_html tbody tr:hover {
   background: rgba(66, 165, 245, 0.2);
 }
 </style>
-<div class="section" id="NumSA">
-<h1>NumSA<a class="headerlink" href="#NumSA" title="Permalink to this headline">¶</a></h1>
-<p>NumSA is a highly modular numerical analysis toolbox I developed during my stay at, King Abdullah University Of Science and Technology 2020. NumSA rely on the following dependencies to work: - PyBind11, this it the C++ Python binder, more info <a class="reference external" href="https://pybind11.readthedocs.io/en/stable/">here</a>, - Eigen, this is the linear algebra library we decied to use, more info <a class="reference external" href="https://eigen.tuxfamily.org/">here</a>,</p>
-<div class="section" id="Getting-Started">
-<h2>Getting Started<a class="headerlink" href="#Getting-Started" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="PyBind11">
-<h3>PyBind11<a class="headerlink" href="#PyBind11" title="Permalink to this headline">¶</a></h3>
-<p>To compile pybind11 move in the pybind11 folder (dep/pybind11) and use the following commands,</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>mkdir build
-cd build
-cmake ..
-make check -j 4
-</pre></div>
-</div>
-</div>
-<div class="section" id="Eigen">
-<h3>Eigen<a class="headerlink" href="#Eigen" title="Permalink to this headline">¶</a></h3>
-<p>To compile QHull move in the pybind11 folder (dep/QHull) and use the following commands,</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>mkdir build
-cd build
-cmake ..
-make install
-</pre></div>
-</div>
-<p>last operation might require root privileges.</p>
-</div>
-<div class="section" id="PyGmsh-and-PyVista">
-<h3>PyGmsh and PyVista<a class="headerlink" href="#PyGmsh-and-PyVista" title="Permalink to this headline">¶</a></h3>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>apt-get install python3-gmsh
-pip install pygmsh
-pip install pyvista
-</pre></div>
-</div>
-<p>last operation might require root privileges.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span>
+<span></span><span class="kn">import</span> <span class="nn">pygmsh</span><span class="o">,</span><span class="nn">pyvista</span>
+
+<span class="k">with</span> <span class="n">pygmsh</span><span class="o">.</span><span class="n">geo</span><span class="o">.</span><span class="n">Geometry</span><span class="p">()</span> <span class="k">as</span> <span class="n">geom</span><span class="p">:</span>
+    <span class="n">geom</span><span class="o">.</span><span class="n">add_polygon</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.2</span><span class="p">],</span>
+            <span class="p">[</span><span class="mf">1.1</span><span class="p">,</span> <span class="mf">1.2</span><span class="p">],</span>
+            <span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">],</span>
+        <span class="p">],</span>
+        <span class="n">mesh_size</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">mesh</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">generate_mesh</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
 </div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">vista</span> <span class="o">=</span> <span class="n">pyvista</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s1">&#39;test.vtk&#39;</span><span class="p">)</span>
+<span class="n">vista</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/home/uzerbinati/.local/lib/python3.8/site-packages/pyvista/jupyter/notebook.py:56: UserWarning: Failed to use notebook backend:
+
+Please install `ipyvtklink` to use this feature: https://github.com/Kitware/ipyvtklink
+
+Falling back to a static output.
+  warnings.warn(f&#39;Failed to use notebook backend: \n\n{e}\n\n&#39;
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="_images/GMsh_1_1.png" src="_images/GMsh_1_1.png" />
 </div>
 </div>
 
@@ -345,16 +348,8 @@ pip install pyvista
 
 
 <h3>Navigation</h3>
-<ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">NumSA</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#Getting-Started">Getting Started</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#PyBind11">PyBind11</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#Eigen">Eigen</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#PyGmsh-and-PyVista">PyGmsh and PyVista</a></li>
-</ul>
-</li>
-</ul>
-</li>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="GettingStarted.html">NumSA</a></li>
 <li class="toctree-l1"><a class="reference internal" href="TensorFlow/index.html">TensorFlow</a></li>
 </ul>
 
@@ -362,8 +357,6 @@ pip install pyvista
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="index.html" title="previous chapter">Welcome to Suite’s documentation!</a></li>
-      <li>Next: <a href="TensorFlow/index.html" title="next chapter">TensorFlow</a></li>
   </ul></li>
 </ul>
 </div>
@@ -391,7 +384,7 @@ pip install pyvista
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
       
       |
-      <a href="_sources/GettingStarted.ipynb.txt"
+      <a href="_sources/GMsh.ipynb.txt"
           rel="nofollow">Page source</a>
     </div>
 
