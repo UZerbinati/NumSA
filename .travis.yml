@@ -5,7 +5,7 @@ compiler: g++
 before_install: 
         - pyenv global 3.8
         - cd py
-        - pip3 install .
+        - pip3 -q install .
 script: 
         - cd tests
         - pytest
