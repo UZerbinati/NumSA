@@ -30,3 +30,10 @@ def test_Loss1():
     plt.legend(["2nd Order Taylor Error","3rd Order Convergence"])
     order = (tf.math.log(Error[7])-tf.math.log(Error[9]))/(np.log(ErrorH[7])-np.log(ErrorH[9]))
     assert 2.9 < order;
+def test_eig1():
+    #Defining the Hessian class for the above loss function in x
+    x0 = tf.Variable([1.0,1.0])
+    H =  Hessian(Loss1,x0)
+    #Using Power iteration method to compute the maximum eigenvalue
+    assert abs(H.eig("pi-max")-30) < 1e-4;
+

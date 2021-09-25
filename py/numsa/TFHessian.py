@@ -27,3 +27,11 @@ class Hessian:
             return backward, acc.jvp(backward);
         else:
             return acc.jvp(backward);
+    def eig(self,flag,itmax=10):
+        if flag == "pi-max":
+            v = self.x0;
+            v = (1/tf.norm(v))*v;
+            for i in range(itmax):
+                v = self.action(v);
+                v = (1/tf.norm(v))*v;
+            return tf.tensordot(v,self.action(v),1);
