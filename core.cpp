@@ -13,8 +13,10 @@ Developed at KAUST, Saudi Arabia
 namespace py = pybind11;
 
 #include "core/mesh.cpp"
+#include "core/space.cpp"
 
 PYBIND11_MODULE(core, module) {
     module.attr("release") = "0.0.1";
     MeshBind(module);
+    SpaceBind(module);
 }

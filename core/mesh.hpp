@@ -18,6 +18,10 @@ class Mesh
 		void SetCells(std::vector<std::vector<int>> cs);
 		void SetPoints(std::vector< MatrixXd > ps);
 		std::string disp();
+		int ElNumber();
+		int CellPointNumber(int cell_number);
+		int PointsNumber();
+		std::vector <MatrixXd> GetPoints();
 
 };
 Mesh UniformMesh(MatrixXd a, MatrixXd b, double h);

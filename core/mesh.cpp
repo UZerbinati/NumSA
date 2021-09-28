@@ -42,23 +42,44 @@ std::string Mesh::disp(){
 	}
 	return msg;
 }
-void MeshBind(py::module &module){
-	py::class_<Mesh>(module, "Mesh")
-		.def(py::init<int>())
-		.def("__repr__", &Mesh::disp)
-		.def("SetPoints", &Mesh::SetPoints)
-		.def("SetCells", &Mesh::SetCells);
-}
 Mesh UniformMesh(MatrixXd a, MatrixXd b, double h){
 	/*
 	 * This functions create a uniform mesh
 	 * from the point a, to the point b 
 	 * in a uniform spaced manner.
 	 */
-	assert(a.rows == b.rows &&"Point A and B do not have the same dimensions.");
-	if (a.rows == 1){
-		Mesh uniformesh(1);
+	assert(a.rows() == b.rows() &&"Point A and B do not have the same dimensions.");
+	Mesh dummy(1); // We initialize an empty mesh with dimension 1, as dummy return;
+	if (a.rows() == 1){
+		Mesh uniformesh(1); // We initialize an empty mesh with dimension 1.
 		return uniformesh;
 	}
+	return dummy;
 
 }
+//Function that returns the number of elements in a mesh
+int Mesh::ElNumber(){
+	return cells.size();
+}
+//Function that returns the number of points in a cell
+int Mesh::CellPointNumber(int cell_number){
+	return cells[cell_number].size();
+}
+int Mesh::PointsNumber(){
+	return points.size();
+}
+std::vector <MatrixXd> Mesh::GetPoints(){
+	return points;
+}
+void MeshBind(py::module &module){
+	py::class_<Mesh>(module, "Mesh")
+		.def(py::init<int>())
+		.def("__repr__", &Mesh::disp)
+		.def("SetPoints", &Mesh::SetPoints)
+		.def("SetCells", &Mesh::SetCells)
+		.def("GetPoints", &Mesh::GetPoints)
+		.def("ElNumber", &Mesh::ElNumber)
+		.def("PointsNumber", &Mesh::ElNumber)
+		.def("CellPointNumber", &Mesh::ElNumber);
+}
+
