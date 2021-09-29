@@ -94,10 +94,13 @@ class Hessian:
                         #Column where we start the filling;
                         starti = util_shape_product([model_weights[r].shape for r in range(k)])
                         for s in range(len(model_weights)-1):
-                            matH[bindex:tindex,starti+i] = self.action(v)[s].numpy().reshape(util_shape_product([model_weights[s].shape]));
+                            layerH = self.action(v);
+                            #removeing none in the layerH
+                            layerH = [ tf.Variable([0]) if l==None else l for l in layerH];
+                            matH[bindex:tindex,starti+i] = layerH[s].numpy().reshape(util_shape_product([model_weights[s].shape]));
                             bindex = tindex;
                             tindex = tindex+util_shape_product([model_weights[s+1].shape])
-                        matH[bindex:tindex,starti+i] = self.action(v)[-1].numpy().reshape(util_shape_product([model_weights[-1].shape]));
+                        matH[bindex:tindex,starti+i] = layerH[-1].numpy().reshape(util_shape_product([model_weights[-1].shape]));
         if (grad):
             return matH, Grad;
         else:
