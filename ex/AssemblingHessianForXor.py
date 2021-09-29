@@ -1,3 +1,7 @@
+"""
+Example on how to assemble an Hessian from a Neural Network
+"""
+
 
 fullH = np.zeros((9,9));
 for i in range(4):

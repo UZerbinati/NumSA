@@ -15,8 +15,9 @@ class Space
 		void SetMesh(Mesh m);
 		Mesh getMesh();
 		double Quadrature(MatrixXd Dofs);
-		virtual MatrixXd GetValue(MatrixXd Dofs, MatrixXd x);  
+		MatrixXd GetValue(MatrixXd Dofs, MatrixXd x);  
 		MatrixXd ReferenceMap(MatrixXd x);
+		int nDotEl;
 
 };
 

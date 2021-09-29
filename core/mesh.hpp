@@ -15,6 +15,7 @@ class Mesh
 	public:
 		Mesh();
 		Mesh(int d);
+		int getDim();
 		void SetCells(std::vector<std::vector<int>> cs);
 		void SetPoints(std::vector< MatrixXd > ps);
 		std::string disp();

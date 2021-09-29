@@ -11,6 +11,9 @@ Mesh::Mesh(int d){
 	MatrixXd m = MatrixXd::Random(3,1);
 	cells = {{0,0,0}};
 	points = {m};
+}	
+int Mesh::getDim(){
+	return dim;
 }
 void Mesh::SetCells(std::vector<std::vector<int>> cs){
 	/*
@@ -44,6 +47,7 @@ std::string Mesh::disp(){
 }
 Mesh UniformMesh(MatrixXd a, MatrixXd b, double h){
 	/*
+	 * WARNING TO BE COMPLETED
 	 * This functions create a uniform mesh
 	 * from the point a, to the point b 
 	 * in a uniform spaced manner.
@@ -80,6 +84,7 @@ void MeshBind(py::module &module){
 		.def("GetPoints", &Mesh::GetPoints)
 		.def("ElNumber", &Mesh::ElNumber)
 		.def("PointsNumber", &Mesh::ElNumber)
+		.def("getDim", &Mesh::getDim)
 		.def("CellPointNumber", &Mesh::ElNumber);
 }
 
