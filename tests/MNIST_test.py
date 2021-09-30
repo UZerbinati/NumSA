@@ -98,4 +98,5 @@ fullH= H.mat(model.trainable_weights,"KERAS");
 plt.figure(figsize=(12,12))
 plt.imshow(np.log10(abs(fullH)+1e-16))
 plt.colorbar()
-plt.save('MNISTHessian.eps');
+np.save("MNIST_Hessian",fullH)
+plt.savefig('MNISTHessian.eps');
