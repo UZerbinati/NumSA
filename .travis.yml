@@ -2,12 +2,14 @@ language: cpp
 os: linux
 dist: bionic
 compiler: g++
+env:
+  matrix:
+    - MPI=mpich
+
 before_install: 
         - pyenv global 3.8
         - cd py
         - pip3 -q install .
-        - apt-get install openmpi-bin libopenmpi-dev
-
 script: 
         - cd ..
         - cd tests
