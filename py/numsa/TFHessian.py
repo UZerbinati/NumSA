@@ -1,5 +1,6 @@
 import tensorflow as tf
 import numpy as np
+from mpi4py import MPI
 
 def util_shape_product(Layers):
     N = 0;
@@ -20,6 +21,9 @@ class Hessian:
     def __init__(self,loss,where):
         self.LossFunction = loss;
         self.x0 = where;
+        self.verbose = False;
+    def SwitchVerbose(self):
+        self.verbose = not(self.verbose);
     def action(self,v,grad=False):
         """
         If the grad option is True, also the gradient is returned.
@@ -38,6 +42,25 @@ class Hessian:
         else:
             return acc.jvp(backward);
     def mat(self,model_weights,flag,grad=False):
+        """
+        Setting up the MPI support
+        --------------------------
+        My idea for parallelizing the code is very stupid, I devide the construction of the 
+        canonical base among the processes and the evaluation of the Hessian vector product
+        among the same process. Then we use one last process to sum the result Hessian into
+        the final Hessian.
+        UZ
+        """
+        comm = MPI.COMM_WORLD;
+        nprs = comm.Get_size()
+        if nprs == 1:
+            nsect = 1;
+        else:
+            nsect = nprs - 1;
+        if self.verbose:
+            print("MPI the world is {} process big !".format(nprs));
+        rank = comm.Get_rank();
+
         N = util_shape_product([layer.shape for layer in model_weights]);
         matH = np.zeros((N,N));
         Grad = np.zeros((N,));
@@ -47,7 +70,8 @@ class Hessian:
                 for k in range(len(model_weights)):
                     #Cycling over the possible combination of the canonical base with 1.0 in the 
                     #layer k.
-                    for i in range(util_shape_product([model_weights[k].shape])):
+                    NBase = np.array_split(range(util_shape_product([model_weights[k].shape])),nsect);
+                    for i in NBase[rank]: #range(util_shape_product([model_weights[k].shape])):
                         v = [];
                         #Cyling over the number of layer in the NN to build the vector of the conical
                         #base.
@@ -72,12 +96,18 @@ class Hessian:
                         layerGrad, layerH =self.action(v, grad=True)
                         Grad[bindex:tindex] = layerGrad[-1].numpy().reshape(util_shape_product([model_weights[-1].shape]),);
                         matH[bindex:tindex,starti+i] =layerH[-1].numpy().reshape(util_shape_product([model_weights[-1].shape]));
+                        if rank == 0:
+                            for l in range(1,nprs):
+                                matH = matH + com.recv(source=l);
+                        else:
+                            comm.send(matH, dest=0);
             else:
                 #Cycling over the number of layer in the NN
                 for k in range(len(model_weights)):
                     #Cycling over the possible combination of the canonical base with 1.0 in the 
                     #layer k.
-                    for i in range(util_shape_product([model_weights[k].shape])):
+                    NBase = np.array_split(range(util_shape_product([model_weights[k].shape])),nsect);
+                    for i in NBase[rank]:
                         v = [];
                         #Cyling over the number of layer in the NN to build the vector of the conical
                         #base.
@@ -101,6 +131,12 @@ class Hessian:
                             bindex = tindex;
                             tindex = tindex+util_shape_product([model_weights[s+1].shape])
                         matH[bindex:tindex,starti+i] = layerH[-1].numpy().reshape(util_shape_product([model_weights[-1].shape]));
+                        if rank == 0:
+                            for l in range(1,nprs):
+                                matH = matH + com.recv(source=l);
+                        else:
+                            comm.send(matH, dest=0);
+
         if (grad):
             return matH, Grad;
         else:

@@ -1,2 +1,2 @@
 make
-pip3 install ./py
+pip3 install ./py[extra]

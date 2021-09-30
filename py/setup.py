@@ -12,7 +12,11 @@ setup(
     include_package_data=True,
     install_requires=['numpy~=1.19.2',
     		  'matplotlib',
-    		  'pygmsh',
     		  'pytest',
-    		  'tensorflow'],
+    		  'mpi4py'],
+    extras_require={
+    	'Notebooks': ['tqdm'],
+    	'Hessian': ['tensorflow'],
+    	'FEM': ['pygmsh']
+    }
 )
