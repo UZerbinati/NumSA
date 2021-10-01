@@ -18,5 +18,10 @@ setup(
     	'Notebooks': ['tqdm'],
     	'Hessian': ['tensorflow'],
     	'FEM': ['pygmsh']
+    	'Travis': ['numpy>=1.19.2',
+    		  'matplotlib',
+    		  'pytest',
+    		  'tensorflow',
+    		  'tqdm']
     }
 )
