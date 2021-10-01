@@ -8,6 +8,7 @@ env:
 
 before_install: 
         - pyenv global 3.8
+        - sudo apt install libopenmpi-dev
         - cd py
         - pip3 -q install .
 script: 
