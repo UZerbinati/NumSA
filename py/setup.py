@@ -17,7 +17,7 @@ setup(
     extras_require={
     	'Notebooks': ['tqdm'],
     	'Hessian': ['tensorflow'],
-    	'FEM': ['pygmsh']
+    	'FEM': ['pygmsh'],
     	'Travis': ['numpy>=1.19.2',
     		  'matplotlib',
     		  'pytest',
