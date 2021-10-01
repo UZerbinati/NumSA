@@ -14,6 +14,7 @@ before_install:
         - pip3 -q install .
         - pip3 -q install .[Hessian]
         - pip3 -q install .[Notebook]
+        - pip3 -q install .[FEM]
 script: 
         - cd ..
         - cd tests
