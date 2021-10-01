@@ -13,6 +13,7 @@ before_install:
         - cd py
         - pip3 -q install .
         - pip3 -q install .[Hessian]
+        - pip3 -q install .[Notebook]
 script: 
         - cd ..
         - cd tests
