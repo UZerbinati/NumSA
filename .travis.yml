@@ -15,7 +15,7 @@ before_install:
         - conda update --yes conda
         - conda install --yes mpi4py mpich
         - cd py
-        - pip3 -q install .
+        - pip3 -q install .[Travis]
 script: 
         - cd ..
         - cd tests
