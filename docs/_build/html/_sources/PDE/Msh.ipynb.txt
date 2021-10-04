@@ -11,7 +11,7 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 6,
+   "execution_count": 1,
    "id": "6ab241f9",
    "metadata": {},
    "outputs": [
@@ -28,7 +28,7 @@
    "source": [
     "import numpy as np\n",
     "import numsa\n",
-    "import numsa.fem as fem\n",
+    "import numsa.core as fem\n",
     "numsa.info()"
    ]
   },
@@ -42,7 +42,7 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 7,
+   "execution_count": 2,
    "id": "89efdf3a",
    "metadata": {},
    "outputs": [
@@ -52,9 +52,9 @@
      "text": [
       "Mesh Dimension: 1\n",
       "Poins: \n",
-      "[ 0.257742\n",
-      "-0.270431\n",
-      "0.0268018]\n",
+      "[ -0.444451\n",
+      "   0.10794\n",
+      "-0.0452059]\n",
       "Cells: \n",
       "[ 0 0 0 ]\n",
       "\n"
@@ -130,7 +130,7 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 5,
+   "execution_count": 6,
    "id": "86ec72f1",
    "metadata": {},
    "outputs": [
@@ -140,7 +140,7 @@
        "array([[1.]])"
       ]
      },
-     "execution_count": 5,
+     "execution_count": 6,
      "metadata": {},
      "output_type": "execute_result"
     }

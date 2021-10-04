@@ -1,5 +1,6 @@
 import tensorflow as tf
 import numpy as np
+import sys
 from mpi4py import MPI
 from tqdm import tqdm
 
@@ -23,9 +24,12 @@ class Hessian:
         self.LossFunction = loss;
         self.x0 = where;
         self.verbose = False;
-    def SwitchVerbose(self):
-        self.verbose = not(self.verbose);
-        tqdm = lambda x : x
+    def SwitchVerbose(self,state):
+        self.verbose = state;
+        if not(state):
+        	self.new_tqdm = lambda x : x  	
+        else:
+        	self.new_tqdm = tqdm
     def action(self,v,grad=False):
         """
         If the grad option is True, also the gradient is returned.
@@ -73,7 +77,7 @@ class Hessian:
                     #Cycling over the possible combination of the canonical base with 1.0 in the 
                     #layer k.
                     NBase = np.array_split(range(util_shape_product([model_weights[k].shape])),nsect);
-                    for i in tqdm(NBase[rank]): #range(util_shape_product([model_weights[k].shape])):
+                    for i in self.new_tqdm(NBase[rank]): #range(util_shape_product([model_weights[k].shape])):
                         v = [];
                         #Cyling over the number of layer in the NN to build the vector of the conical
                         #base.
@@ -109,7 +113,7 @@ class Hessian:
                     #Cycling over the possible combination of the canonical base with 1.0 in the 
                     #layer k.
                     NBase = np.array_split(range(util_shape_product([model_weights[k].shape])),nsect);
-                    for i in tqdm(NBase[rank]):
+                    for i in self.new_tqdm(NBase[rank]):
                         v = [];
                         #Cyling over the number of layer in the NN to build the vector of the conical
                         #base.
