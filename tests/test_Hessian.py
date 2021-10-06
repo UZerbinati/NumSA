@@ -112,4 +112,6 @@ def test_constant_weights():
         return tf.math.reduce_mean(predictions);
     H = Hessian(Loss,model.trainable_weights)
     fullH = H.mat(model.trainable_weights,"KERAS");
+    np.save("test_constant_weights",fullH);
+    print("Shape {}".format(fullH.shape));
     assert  (np.sum(fullH[:,8])+np.sum(fullH[8,:])+fullH[8,8]+fullH[7,7]+fullH[6,6]+fullH[6,7]+fullH[7,6])==0;

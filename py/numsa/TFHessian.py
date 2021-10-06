@@ -23,7 +23,8 @@ class Hessian:
     def __init__(self,loss,where):
         self.LossFunction = loss;
         self.x0 = where;
-        self.verbose = False;
+        self.SwitchVerbose(False);
+        self.comm = MPI.COMM_WORLD;
     def SwitchVerbose(self,state):
         self.verbose = state;
         if not(state):
@@ -57,12 +58,12 @@ class Hessian:
         the final Hessian.
         UZ
         """
-        comm = MPI.COMM_WORLD;
+        comm = self.comm;
         nprs = comm.Get_size()
         if nprs == 1:
             nsect = 1;
         else:
-            nsect = nprs - 1;
+            nsect = nprs;
         if self.verbose:
             print("MPI the world is {} process big !".format(nprs));
         rank = comm.Get_rank();
@@ -70,6 +71,7 @@ class Hessian:
         N = util_shape_product([layer.shape for layer in model_weights]);
         matH = np.zeros((N,N));
         Grad = np.zeros((N,));
+
         if flag == "KERAS":
             if (grad):
                 #Cycling over the number of layer in the NN
@@ -104,7 +106,7 @@ class Hessian:
                         matH[bindex:tindex,starti+i] =layerH[-1].numpy().reshape(util_shape_product([model_weights[-1].shape]));
                         if rank == 0:
                             for l in range(1,nprs):
-                                matH = matH + com.recv(source=l);
+                                matH = matH + comm.recv(source=l);
                         else:
                             comm.send(matH, dest=0);
             else:
@@ -138,15 +140,27 @@ class Hessian:
                             tindex = tindex+util_shape_product([model_weights[s+1].shape])
                         matH[bindex:tindex,starti+i] = layerH[-1].numpy().reshape(util_shape_product([model_weights[-1].shape]));
                         if rank == 0:
+                            print("We are at Rank {}".format(rank))
                             for l in range(1,nprs):
-                                matH = matH + com.recv(source=l);
+                                print("We are reciving from Rank {}".format(l))
+                                matH = matH + comm.recv(source=l);
+                            print("--------|HESSIAN FLAG 1|-----------");
+                            print(matH);
                         else:
+                            print("We are at Rank {}".format(rank))
                             comm.send(matH, dest=0);
-
+                            print("--------|HESSIAN FLAG 1|-----------");
+                            print(matH);
         if (grad):
-            return matH, Grad;
+            if rank == 0:
+                print("--------|HESSIAN|-----------");
+                print(matH);
+                return matH, Grad;
         else:
-            return matH;
+            if rank == 0:
+                print("--------|HESSIAN|-----------");
+                print(matH)
+                return matH;
     def eig(self,flag,itmax=10):
         if flag == "pi-max":
             v = self.x0;
