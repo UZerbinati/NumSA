@@ -60,10 +60,7 @@ class Hessian:
         """
         comm = self.comm;
         nprs = comm.Get_size()
-        if nprs == 1:
-            nsect = 1;
-        else:
-            nsect = nprs;
+        nsect = nprs;
         if self.verbose:
             print("MPI the world is {} process big !".format(nprs));
         rank = comm.Get_rank();
@@ -114,7 +111,8 @@ class Hessian:
                 for k in range(len(model_weights)):
                     #Cycling over the possible combination of the canonical base with 1.0 in the 
                     #layer k.
-                    NBase = np.array_split(range(util_shape_product([model_weights[k].shape])),nsect);
+                    Base = util_shape_product([model_weights[k].shape]);
+                    NBase = np.array_split(range(Base),nsect);
                     for i in self.new_tqdm(NBase[rank]):
                         v = [];
                         #Cyling over the number of layer in the NN to build the vector of the conical
@@ -139,28 +137,14 @@ class Hessian:
                             bindex = tindex;
                             tindex = tindex+util_shape_product([model_weights[s+1].shape])
                         matH[bindex:tindex,starti+i] = layerH[-1].numpy().reshape(util_shape_product([model_weights[-1].shape]));
-                        if rank == 0:
-                            print("We are at Rank {}".format(rank))
-                            for l in range(1,nprs):
-                                print("We are reciving from Rank {}".format(l))
-                                matH = matH + comm.recv(source=l);
-                            print("--------|HESSIAN FLAG 1|-----------");
-                            print(matH);
-                        else:
-                            print("We are at Rank {}".format(rank))
-                            comm.send(matH, dest=0);
-                            print("--------|HESSIAN FLAG 1|-----------");
-                            print(matH);
+                matH = comm.gather(matH,root=0);
         if (grad):
-            if rank == 0:
-                print("--------|HESSIAN|-----------");
-                print(matH);
-                return matH, Grad;
+            return matH, Grad;
         else:
             if rank == 0:
-                print("--------|HESSIAN|-----------");
-                print(matH)
-                return matH;
+                return sum(matH);
+            else:
+                return 1;
     def eig(self,flag,itmax=10):
         if flag == "pi-max":
             v = self.x0;

@@ -24,7 +24,7 @@ def Loss(weights):
     # Compute the loss value for this minibatch.
     loss_value = loss_fn(training_label, predictions);
     return loss_value;
-for epoch in tqdm(range(100)):
+for epoch in range(100):
     for step, (x,y) in enumerate(training_dataset):
         with tf.GradientTape() as tape:
             # Run the forward pass of the layer.
@@ -43,11 +43,12 @@ def Loss(weights):
     loss_value = loss_fn(training_label, predictions);
     return loss_value;
 H = Hessian(Loss,model.trainable_weights)
+H.SwitchVerbose(True);
 print("\nRank: ",H.comm.Get_rank())
 fullH = np.zeros((9,9));
+fullH = H.mat(model.trainable_weights,"KERAS");
 if H.comm.Get_rank() == 0:
-    fullH = H.mat(model.trainable_weights,"KERAS");
     print("Inside H, \n{}".format(fullH))
-    plt.imshow(np.log10(abs(fullH))+1e-16);
+    plt.imshow(np.log10(abs(fullH)+1e-16));
     plt.colorbar();
     plt.show()
