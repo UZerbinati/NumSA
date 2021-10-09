@@ -29,7 +29,7 @@ test_dataset = test_dataset.batch(batch_size)
 #Keras Sequential allow us to place one layer after the other
 model = tf.keras.Sequential([
     tf.keras.layers.Flatten(input_shape=(28, 28)),#Vectorifying layer
-    tf.keras.layers.Dense(128, activation='sigmoid'),#128 weights layer
+    tf.keras.layers.Dense(20, activation='sigmoid'),#128 weights layer
     tf.keras.layers.Dense(10)#10 leyers weights.
 ])
 print("Number of trainable layers {}".format(len(model.trainable_weights)))

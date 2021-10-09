@@ -12,11 +12,9 @@ Developed at KAUST, Saudi Arabia
 
 namespace py = pybind11;
 
-#include "core/mesh.cpp"
-#include "core/space.cpp"
+#include "la/svd.cpp"
 
-PYBIND11_MODULE(core, module) {
+PYBIND11_MODULE(fem, module) {
     module.attr("release") = "0.0.1";
-    MeshBind(module);
-    SpaceBind(module);
+    SVDBind(module);
 }

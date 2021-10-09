@@ -1,5 +1,6 @@
 import tensorflow as tf
 import numpy as np
+import scipy.linalg as la
 import sys
 from mpi4py import MPI
 from tqdm import tqdm
@@ -48,7 +49,34 @@ class Hessian:
             return backward, acc.jvp(backward);
         else:
             return acc.jvp(backward);
-    def mat(self,model_weights,flag,grad=False):
+    def vecprod(self,w,flag):
+        if flag=="KERAS":
+            model_weights = self.x0;
+            u = np.zeros(w.shape[0],)
+            v = [];
+            #Cyling over the number of layer in the NN to build the vector of the conical
+            #base.
+            for j in range(len(model_weights)):
+                starter = util_shape_product([model_weights[r].shape for r in range(j)])
+                vj = np.zeros((util_shape_product([model_weights[j].shape]),));
+                vj = w[starter:starter+vj.shape[0]].reshape(vj.shape[0],); 
+                vj = tf.Variable(vj, dtype=np.float32);
+                vj = tf.reshape(vj, model_weights[j].shape);
+                v = v + [vj];
+            #Filling the Hessian Matrix
+            bindex = 0 #row where we start the filling
+            tindex = util_shape_product([model_weights[0].shape]) #row where we end the filling
+            #Column where we start the filling;
+            for s in range(len(model_weights)-1):
+                layerH = self.action(v);
+                #removeing none in the layerH
+                layerH = [ tf.Variable([0]) if l==None else l for l in layerH];
+                u[bindex:tindex] = layerH[s].numpy().reshape(util_shape_product([model_weights[s].shape]));
+                bindex = tindex;
+                tindex = tindex+util_shape_product([model_weights[s+1].shape])
+            u[bindex:tindex] = layerH[-1].numpy().reshape(util_shape_product([model_weights[-1].shape]));
+            return u;
+    def mat(self,flag,grad=False):
         """
         Setting up the MPI support
         --------------------------
@@ -61,6 +89,7 @@ class Hessian:
         comm = self.comm;
         nprs = comm.Get_size()
         nsect = nprs;
+        model_weights = self.x0;
         if self.verbose:
             print("MPI the world is {} process big !".format(nprs));
         rank = comm.Get_rank();
@@ -145,6 +174,30 @@ class Hessian:
                 return sum(matH);
             else:
                 return 1;
+    def RandMatSVD(self,k,p,flag):
+        model_weights = self.x0;
+        if flag == "KERAS":
+            N = util_shape_product([layer.shape for layer in model_weights]);
+            l = k+p;
+            mu, sigma = 0, 1 # mean and standard deviation
+            omega = np.random.normal(mu, sigma, (N,l))
+            Y = np.zeros((N,l));
+            Bt = np.zeros((N,l));
+            for i in range(l):
+                Y[:,i] = self.vecprod(omega[:,i].reshape(N,1),"KERAS")
+            Q,R = la.qr(Y);
+            print("Shapes {},{}".format(Q.shape,R.shape))
+            #(N,l) Y = A * Omega (N,N)(N,l)
+            #(N,l)(l,l) QR = Y (N,l)
+            #(l,N) B = Q^t A (l,N)(N,N)
+            #Bt = A^t Q = AQ
+            #USV^t = B
+            Q,R = la.qr(Y);
+            for i in range(l):
+                Bt[:,i] = self.vecprod(Q[:,i],"KERAS")
+            B = Bt.T
+            return la.svdvals(B);
+
     def eig(self,flag,itmax=10):
         if flag == "pi-max":
             v = self.x0;

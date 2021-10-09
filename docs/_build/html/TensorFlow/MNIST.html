@@ -361,7 +361,7 @@ The data are labeled in the following categories, [5 0 4 ... 5 6 8]
 <span></span><span class="c1">#Keras Sequential allow us to place one layer after the other</span>
 <span class="n">model</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">Sequential</span><span class="p">([</span>
     <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Flatten</span><span class="p">(</span><span class="n">input_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">28</span><span class="p">,</span> <span class="mi">28</span><span class="p">)),</span><span class="c1">#Vectorifying layer</span>
-    <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;sigmoid&#39;</span><span class="p">),</span><span class="c1">#128 weights layer</span>
+    <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;sigmoid&#39;</span><span class="p">),</span><span class="c1">#128 weights layer</span>
     <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span><span class="c1">#10 leyers weights.</span>
 <span class="p">])</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Number of trainable layers </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">trainable_weights</span><span class="p">)))</span>
@@ -378,9 +378,9 @@ The data are labeled in the following categories, [5 0 4 ... 5 6 8]
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 Number of trainable layers 4
-Number of weights trainable per layer 0, (784, 128)
-Number of weights trainable per layer 1, (128,)
-Number of weights trainable per layer 2, (128, 10)
+Number of weights trainable per layer 0, (784, 20)
+Number of weights trainable per layer 1, (20,)
+Number of weights trainable per layer 2, (20, 10)
 Number of weights trainable per layer 3, (10,)
 </pre></div></div>
 </div>
@@ -443,14 +443,14 @@ Number of weights trainable per layer 3, (10,)
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<script type="application/vnd.jupyter.widget-view+json">{"model_id": "81e2d54eba5c47fb890c4b74cd24ca83", "version_major": 2, "version_minor": 0}</script></div>
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "a8207d6406294c7c9290fc9045ed9afc", "version_major": 2, "version_minor": 0}</script></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-Validation acc: 0.8389
+Validation acc: 0.7548
 </pre></div></div>
 </div>
 <p>Now we test the neural network on a sample digit, randomly selected from the test dataset.</p>
@@ -488,7 +488,7 @@ Validation acc: 0.8389
 </div>
 <p>We now show how to use our package to compute the Hessian of the NN wrt to the weights with a fixed image, first we compute one partial Hessian for each layer of the Neural Network then we compute the the full Hessian of the neural network.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -498,10 +498,18 @@ Validation acc: 0.8389
     <span class="n">loss_value</span> <span class="o">=</span> <span class="n">loss_fn</span><span class="p">(</span><span class="n">batch_train_labels</span><span class="p">,</span> <span class="n">logits</span><span class="p">);</span>
     <span class="k">return</span> <span class="n">loss_value</span><span class="p">;</span>
 <span class="n">H</span> <span class="o">=</span> <span class="n">Hessian</span><span class="p">(</span><span class="n">Loss</span><span class="p">,</span><span class="n">model</span><span class="o">.</span><span class="n">trainable_weights</span><span class="p">)</span>
-<span class="n">H</span><span class="o">.</span><span class="n">SwitchVerbose</span><span class="p">()</span>
+<span class="n">H</span><span class="o">.</span><span class="n">SwitchVerbose</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">fullH</span><span class="o">=</span> <span class="n">H</span><span class="o">.</span><span class="n">mat</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">trainable_weights</span><span class="p">,</span><span class="s2">&quot;KERAS&quot;</span><span class="p">);</span>
 </pre></div>
 </div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+  0%|          | 3/15680 [00:00&lt;11:20, 23.04it/s]
+</pre></div></div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
@@ -514,27 +522,16 @@ MPI the world is 1 process big !
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
-<div class="output_area docutils container">
+<div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
-<span class="ansi-red-fg">MemoryError</span>                               Traceback (most recent call last)
-<span class="ansi-green-fg">&lt;ipython-input-6-90648549f250&gt;</span> in <span class="ansi-cyan-fg">&lt;module&gt;</span>
-<span class="ansi-green-intense-fg ansi-bold">      6</span> H <span class="ansi-blue-fg">=</span> Hessian<span class="ansi-blue-fg">(</span>Loss<span class="ansi-blue-fg">,</span>model<span class="ansi-blue-fg">.</span>trainable_weights<span class="ansi-blue-fg">)</span>
-<span class="ansi-green-intense-fg ansi-bold">      7</span> H<span class="ansi-blue-fg">.</span>SwitchVerbose<span class="ansi-blue-fg">(</span><span class="ansi-blue-fg">)</span>
-<span class="ansi-green-fg">----&gt; 8</span><span class="ansi-red-fg"> </span>fullH<span class="ansi-blue-fg">=</span> H<span class="ansi-blue-fg">.</span>mat<span class="ansi-blue-fg">(</span>model<span class="ansi-blue-fg">.</span>trainable_weights<span class="ansi-blue-fg">,</span><span class="ansi-blue-fg">&#34;KERAS&#34;</span><span class="ansi-blue-fg">)</span><span class="ansi-blue-fg">;</span>
-
-<span class="ansi-green-fg">~/.local/lib/python3.8/site-packages/numsa/TFHessian.py</span> in <span class="ansi-cyan-fg">mat</span><span class="ansi-blue-fg">(self, model_weights, flag, grad)</span>
-<span class="ansi-green-intense-fg ansi-bold">     63</span>
-<span class="ansi-green-intense-fg ansi-bold">     64</span>         N <span class="ansi-blue-fg">=</span> util_shape_product<span class="ansi-blue-fg">(</span><span class="ansi-blue-fg">[</span>layer<span class="ansi-blue-fg">.</span>shape <span class="ansi-green-fg">for</span> layer <span class="ansi-green-fg">in</span> model_weights<span class="ansi-blue-fg">]</span><span class="ansi-blue-fg">)</span><span class="ansi-blue-fg">;</span>
-<span class="ansi-green-fg">---&gt; 65</span><span class="ansi-red-fg">         </span>matH <span class="ansi-blue-fg">=</span> np<span class="ansi-blue-fg">.</span>zeros<span class="ansi-blue-fg">(</span><span class="ansi-blue-fg">(</span>N<span class="ansi-blue-fg">,</span>N<span class="ansi-blue-fg">)</span><span class="ansi-blue-fg">)</span><span class="ansi-blue-fg">;</span>
-<span class="ansi-green-intense-fg ansi-bold">     66</span>         Grad <span class="ansi-blue-fg">=</span> np<span class="ansi-blue-fg">.</span>zeros<span class="ansi-blue-fg">(</span><span class="ansi-blue-fg">(</span>N<span class="ansi-blue-fg">,</span><span class="ansi-blue-fg">)</span><span class="ansi-blue-fg">)</span><span class="ansi-blue-fg">;</span>
-<span class="ansi-green-intense-fg ansi-bold">     67</span>         <span class="ansi-green-fg">if</span> flag <span class="ansi-blue-fg">==</span> <span class="ansi-blue-fg">&#34;KERAS&#34;</span><span class="ansi-blue-fg">:</span>
-
-<span class="ansi-red-fg">MemoryError</span>: Unable to allocate 77.2 GiB for an array with shape (101770, 101770) and data type float64
+100%|██████████| 15680/15680 [09:31&lt;00:00, 27.43it/s]
+100%|██████████| 20/20 [00:00&lt;00:00, 24.91it/s]
+100%|██████████| 200/200 [00:07&lt;00:00, 25.24it/s]
+100%|██████████| 10/10 [00:00&lt;00:00, 25.57it/s]
 </pre></div></div>
 </div>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
@@ -542,6 +539,22 @@ MPI the world is 1 process big !
 <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">fullH</span><span class="p">)</span><span class="o">+</span><span class="mf">1e-16</span><span class="p">))</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">()</span>
 </pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;matplotlib.colorbar.Colorbar at 0x7f25b14ee2b0&gt;
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/TensorFlow_MNIST_13_1.png" src="../_images/TensorFlow_MNIST_13_1.png" />
 </div>
 </div>
 </div>
