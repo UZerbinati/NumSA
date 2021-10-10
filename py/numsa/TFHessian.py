@@ -21,7 +21,8 @@ class Hessian:
     One can compute the action of the Hessian as follow,
     H.action(v) = [d^2(Loss)/d(x^2) (x0)]v
     """
-    def __init__(self,loss,where):
+    def __init__(self,loss,where,flag="None"):
+        self.flag = flag;
         self.LossFunction = loss;
         self.x0 = where;
         self.SwitchVerbose(False);
@@ -36,21 +37,49 @@ class Hessian:
         """
         If the grad option is True, also the gradient is returned.
         """
-        #Farward diff. tape for the second derivative
-        with tf.autodiff.ForwardAccumulator(self.x0,v) as acc:
-            #Backward diff. tape for the first derivative
-            with tf.GradientTape() as tape:
-                # It is important to evaluate the lost function inside
-                # the two tape in order to use automatic diff. 
-                LossEvaluation = self.LossFunction(self.x0)
-                backward = tape.gradient(LossEvaluation, self.x0);
-                #print("gradient: ",backward)
-        if grad:
-            return backward, acc.jvp(backward);
+        comm = self.comm;
+        nprs = comm.Get_size()
+        #Check if the lost funciton have been writen from MPI support
+        if "comm" in self.LossFunction.__code__.co_varnames:
+            #Farward diff. tape for the second derivative
+            with tf.autodiff.ForwardAccumulator(self.x0,v) as acc:
+                #Backward diff. tape for the first derivative
+                with tf.GradientTape() as tape:
+                    # It is important to evaluate the lost function inside
+                    # the two tape in order to use automatic diff. 
+                    LossEvaluation = self.LossFunction(self.x0,comm)
+                    backward = tape.gradient(LossEvaluation, self.x0);
+                    #print("gradient: ",backward)
+            Hvs = comm.gather(acc.jvp(backward), root=0);
+            Grads = comm.gather(backward,root=0); 
+            if grad:
+                Hv = [];
+                Grad = [];
+                for i in range(len(self.x0)):
+                    Hv = Hv+[sum([Hvs[k][i] for k in range(len(Hvs))])];
+                    Grad = Grad+[sum([Grads[k][i] for k in range(len(Grads))])];
+                return Hv, Grad;
+            else:
+                Hv = [];
+                for i in range(len(self.x0)):
+                    Hv = Hv+[sum([Hvs[k][i] for k in range(len(Hvs))])];
+                return Hv;
         else:
-            return acc.jvp(backward);
-    def vecprod(self,w,flag):
-        if flag=="KERAS":
+            #Farward diff. tape for the second derivative
+            with tf.autodiff.ForwardAccumulator(self.x0,v) as acc:
+                #Backward diff. tape for the first derivative
+                with tf.GradientTape() as tape:
+                    # It is important to evaluate the lost function inside
+                    # the two tape in order to use automatic diff. 
+                    LossEvaluation = self.LossFunction(self.x0)
+                    backward = tape.gradient(LossEvaluation, self.x0);
+                    #print("gradient: ",backward)
+            if grad:
+                return backward, acc.jvp(backward);
+            else:
+                return acc.jvp(backward);
+    def vecprod(self,w):
+        if self.flag=="KERAS":
             model_weights = self.x0;
             u = np.zeros(w.shape[0],)
             v = [];
@@ -76,7 +105,7 @@ class Hessian:
                 tindex = tindex+util_shape_product([model_weights[s+1].shape])
             u[bindex:tindex] = layerH[-1].numpy().reshape(util_shape_product([model_weights[-1].shape]));
             return u;
-    def mat(self,flag,grad=False):
+    def mat(self,grad=False):
         """
         Setting up the MPI support
         --------------------------
@@ -98,7 +127,7 @@ class Hessian:
         matH = np.zeros((N,N));
         Grad = np.zeros((N,));
 
-        if flag == "KERAS":
+        if self.flag == "KERAS":
             if (grad):
                 #Cycling over the number of layer in the NN
                 for k in range(len(model_weights)):
@@ -130,11 +159,7 @@ class Hessian:
                         layerGrad, layerH =self.action(v, grad=True)
                         Grad[bindex:tindex] = layerGrad[-1].numpy().reshape(util_shape_product([model_weights[-1].shape]),);
                         matH[bindex:tindex,starti+i] =layerH[-1].numpy().reshape(util_shape_product([model_weights[-1].shape]));
-                        if rank == 0:
-                            for l in range(1,nprs):
-                                matH = matH + comm.recv(source=l);
-                        else:
-                            comm.send(matH, dest=0);
+                matH = comm.gather(matH,root=0);
             else:
                 #Cycling over the number of layer in the NN
                 for k in range(len(model_weights)):
@@ -168,15 +193,18 @@ class Hessian:
                         matH[bindex:tindex,starti+i] = layerH[-1].numpy().reshape(util_shape_product([model_weights[-1].shape]));
                 matH = comm.gather(matH,root=0);
         if (grad):
-            return matH, Grad;
+            if rank == 0:
+                return sum(matH), sum(Grad);
+            else:
+                return 1;
         else:
             if rank == 0:
                 return sum(matH);
             else:
                 return 1;
-    def RandMatSVD(self,k,p,flag):
+    def RandMatSVD(self,k,p):
         model_weights = self.x0;
-        if flag == "KERAS":
+        if self.flag == "KERAS":
             N = util_shape_product([layer.shape for layer in model_weights]);
             l = k+p;
             mu, sigma = 0, 1 # mean and standard deviation
@@ -184,9 +212,10 @@ class Hessian:
             Y = np.zeros((N,l));
             Bt = np.zeros((N,l));
             for i in range(l):
-                Y[:,i] = self.vecprod(omega[:,i].reshape(N,1),"KERAS")
+                Y[:,i] = self.vecprod(omega[:,i].reshape(N,1))
             Q,R = la.qr(Y);
-            print("Shapes {},{}".format(Q.shape,R.shape))
+            #HALKO 4.1
+            #
             #(N,l) Y = A * Omega (N,N)(N,l)
             #(N,l)(l,l) QR = Y (N,l)
             #(l,N) B = Q^t A (l,N)(N,N)
@@ -194,9 +223,10 @@ class Hessian:
             #USV^t = B
             Q,R = la.qr(Y);
             for i in range(l):
-                Bt[:,i] = self.vecprod(Q[:,i],"KERAS")
+                Bt[:,i] = self.vecprod(Q[:,i])
             B = Bt.T
-            return la.svdvals(B);
+            U, sigma, Vt = la.svd(B); 
+            return U, sigma, Vt;
 
     def eig(self,flag,itmax=10):
         if flag == "pi-max":

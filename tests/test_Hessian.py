@@ -36,7 +36,7 @@ def test_Loss1():
 def test_eig1():
     #Defining the Hessian class for the above loss function in x
     x0 = tf.Variable([1.0,1.0])
-    H =  Hessian(Loss1,x0)
+    H =  Hessian(Loss1,x0,"KERAS")
     #Using Power iteration method to compute the maximum eigenvalue
     assert abs(H.eig("pi-max")-30) < 1e-4;
 
@@ -65,8 +65,8 @@ def test_sym_Hessian():
     for epoch in range(1):
         for step, (x,y) in enumerate(training_dataset):
             # Compute Hessian and Gradients
-            H = Hessian(Loss,model.trainable_weights)
-            fullH, grad = H.mat("KERAS",grad=True);
+            H = Hessian(Loss,model.trainable_weights,"KERAS")
+            fullH, grad = H.mat(grad=True);
             #Reshaping the Hessians
             grads = [tf.Variable(grad[0:4].reshape(2,2),dtype=np.float32),
                      tf.Variable(grad[4:6].reshape(2,),dtype=np.float32),
@@ -79,7 +79,7 @@ def test_sym_Hessian():
         loss_value = loss_fn(training_label, predictions);
         return loss_value;
     H = Hessian(Loss,model.trainable_weights)
-    fullH = H.mat("KERAS");
+    fullH = H.mat();
     assert np.linalg.norm(fullH-fullH.T) < 1e-4;
 
 
@@ -120,10 +120,10 @@ def test_prod_Hessian():
         # Compute the loss value for this minibatch.
         loss_value = loss_fn(training_label, predictions);
         return loss_value;
-    H = Hessian(Loss,model.trainable_weights)
-    fullH = H.mat("KERAS");
+    H = Hessian(Loss,model.trainable_weights,"KERAS")
+    fullH = H.mat();
     w = np.random.rand(9,1)
-    assert (abs(fullH@w-(H.vecprod(w,"KERAS").reshape(9,1)))<1e-6).all()
+    assert (abs(fullH@w-(H.vecprod(w).reshape(9,1)))<1e-6).all()
 
 
 
@@ -150,8 +150,8 @@ def test_constant_weights():
     for epoch in range(1):
         for step, (x,y) in enumerate(training_dataset):
             # Compute Hessian and Gradients
-            H = Hessian(Loss,model.trainable_weights)
-            fullH, grad = H.mat("KERAS",grad=True);
+            H = Hessian(Loss,model.trainable_weights,"KERAS")
+            fullH, grad = H.mat(grad=True);
             #Reshaping the Hessians
             grads = [tf.Variable(grad[0:4].reshape(2,2),dtype=np.float32),
                      tf.Variable(grad[4:6].reshape(2,),dtype=np.float32),
@@ -162,7 +162,7 @@ def test_constant_weights():
         predictions = model(training_data, training=True) #Logits for this minibatch
         #return tf.math.reduce_mean(tf.math.squared_difference(training_label, predictions));
         return tf.math.reduce_mean(predictions);
-    H = Hessian(Loss,model.trainable_weights)
-    fullH = H.mat("KERAS");
+    H = Hessian(Loss,model.trainable_weights,"KERAS")
+    fullH = H.mat();
     print("Shape {}".format(fullH.shape));
     assert  (np.sum(fullH[:,8])+np.sum(fullH[8,:])+fullH[8,8]+fullH[7,7]+fullH[6,6]+fullH[6,7]+fullH[7,6])==0;
