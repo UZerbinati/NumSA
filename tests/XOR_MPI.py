@@ -24,7 +24,7 @@ def Loss(weights):
     # Compute the loss value for this minibatch.
     loss_value = loss_fn(training_label, predictions);
     return loss_value;
-for epoch in range(100):
+for epoch in tqdm(range(10000)):
     for step, (x,y) in enumerate(training_dataset):
         with tf.GradientTape() as tape:
             # Run the forward pass of the layer.
@@ -38,17 +38,20 @@ for epoch in range(100):
             # the gradients of the trainable variables with respect to the loss.
             grads = tape.gradient(loss_value, model.trainable_weights)
         optimizer.apply_gradients(zip(grads, model.trainable_weights))
-def Loss(weights):
-    predictions = model(training_data, training=True) #Logits for this minibatch
-    loss_value = loss_fn(training_label, predictions);
+def Loss(weights,comm):
+    training_label_batches = np.array_split(training_label,comm.Get_size());
+    training_data_batches = np.array_split(training_data,comm.Get_size());
+    predictions = model(training_data_batches[comm.Get_rank()], training=True) #Logits for this minibatch
+    loss_value = loss_fn(training_label_batches[comm.Get_rank()], predictions);
     return loss_value;
-H = Hessian(Loss,model.trainable_weights)
+H = Hessian(Loss,model.trainable_weights,"KERAS")
 H.SwitchVerbose(True);
 print("\nRank: ",H.comm.Get_rank())
 fullH = np.zeros((9,9));
-fullH = H.mat(model.trainable_weights,"KERAS");
+Hv = H.vecprod(np.array([1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]));
+print("Hv: {}",Hv);
+fullH = H.mat();
 if H.comm.Get_rank() == 0:
-    print("Inside H, \n{}".format(fullH))
     plt.imshow(np.log10(abs(fullH)+1e-16));
     plt.colorbar();
     plt.show()

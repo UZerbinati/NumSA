@@ -66,12 +66,18 @@ def test_sym_Hessian():
         for step, (x,y) in enumerate(training_dataset):
             # Compute Hessian and Gradients
             H = Hessian(Loss,model.trainable_weights,"KERAS")
-            fullH, grad = H.mat(grad=True);
-            #Reshaping the Hessians
-            grads = [tf.Variable(grad[0:4].reshape(2,2),dtype=np.float32),
-                     tf.Variable(grad[4:6].reshape(2,),dtype=np.float32),
-                     tf.Variable(grad[6:8].reshape(2,1),dtype=np.float32),
-                     tf.Variable(grad[8].reshape(1,),dtype=np.float32),]
+            fullH = H.mat();
+            with tf.GradientTape() as tape:
+                # Run the forward pass of the layer.
+                # The operations that the layer applies
+                # to its inputs are going to be recorded
+                # on the GradientTape.
+                labels = model(training_data, training=True)  # Logits for this minibatch
+                # Compute the loss value for this minibatch.
+                loss_value = loss_fn(training_label, labels)
+                # Use the gradient tape to automatically retrieve
+                # the gradients of the trainable variables with respect to the loss.
+                grads = tape.gradient(loss_value, model.trainable_weights)
             optimizer.apply_gradients(zip(grads, model.trainable_weights))
     def Loss(weights):
         predictions = model(training_data, training=True) #Logits for this minibatch
@@ -108,12 +114,18 @@ def test_prod_Hessian():
         for step, (x,y) in enumerate(training_dataset):
             # Compute Hessian and Gradients
             H = Hessian(Loss,model.trainable_weights)
-            fullH, grad = H.mat("KERAS",grad=True);
-            #Reshaping the Hessians
-            grads = [tf.Variable(grad[0:4].reshape(2,2),dtype=np.float32),
-                     tf.Variable(grad[4:6].reshape(2,),dtype=np.float32),
-                     tf.Variable(grad[6:8].reshape(2,1),dtype=np.float32),
-                     tf.Variable(grad[8].reshape(1,),dtype=np.float32),]
+            fullH = H.mat();
+            with tf.GradientTape() as tape:
+                # Run the forward pass of the layer.
+                # The operations that the layer applies
+                # to its inputs are going to be recorded
+                # on the GradientTape.
+                labels = model(training_data, training=True)  # Logits for this minibatch
+                # Compute the loss value for this minibatch.
+                loss_value = loss_fn(training_label, labels)
+                # Use the gradient tape to automatically retrieve
+                # the gradients of the trainable variables with respect to the loss.
+                grads = tape.gradient(loss_value, model.trainable_weights)
             optimizer.apply_gradients(zip(grads, model.trainable_weights))
     def Loss(weights):
         predictions = model(training_data, training=True) #Logits for this minibatch
@@ -151,12 +163,18 @@ def test_constant_weights():
         for step, (x,y) in enumerate(training_dataset):
             # Compute Hessian and Gradients
             H = Hessian(Loss,model.trainable_weights,"KERAS")
-            fullH, grad = H.mat(grad=True);
-            #Reshaping the Hessians
-            grads = [tf.Variable(grad[0:4].reshape(2,2),dtype=np.float32),
-                     tf.Variable(grad[4:6].reshape(2,),dtype=np.float32),
-                     tf.Variable(grad[6:8].reshape(2,1),dtype=np.float32),
-                     tf.Variable(grad[8].reshape(1,),dtype=np.float32),]
+            fullH = H.mat();
+            with tf.GradientTape() as tape:
+                # Run the forward pass of the layer.
+                # The operations that the layer applies
+                # to its inputs are going to be recorded
+                # on the GradientTape.
+                labels = model(training_data, training=True)  # Logits for this minibatch
+                # Compute the loss value for this minibatch.
+                loss_value = loss_fn(training_label, labels)
+                # Use the gradient tape to automatically retrieve
+                # the gradients of the trainable variables with respect to the loss.
+                grads = tape.gradient(loss_value, model.trainable_weights)
             optimizer.apply_gradients(zip(grads, model.trainable_weights))
     def Loss(weights):
         predictions = model(training_data, training=True) #Logits for this minibatch

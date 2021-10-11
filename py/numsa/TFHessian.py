@@ -39,6 +39,7 @@ class Hessian:
         """
         comm = self.comm;
         nprs = comm.Get_size()
+        rank = comm.Get_rank()
         #Check if the lost funciton have been writen from MPI support
         if "comm" in self.LossFunction.__code__.co_varnames:
             #Farward diff. tape for the second derivative
@@ -53,16 +54,21 @@ class Hessian:
             Hvs = comm.gather(acc.jvp(backward), root=0);
             Grads = comm.gather(backward,root=0); 
             if grad:
-                Hv = [];
+                Hv = []
                 Grad = [];
-                for i in range(len(self.x0)):
-                    Hv = Hv+[sum([Hvs[k][i] for k in range(len(Hvs))])];
-                    Grad = Grad+[sum([Grads[k][i] for k in range(len(Grads))])];
+                if rank == 0:
+                    for i in range(len(self.x0)):
+                        Hv = Hv+[sum([Hvs[k][i] for k in range(len(Hvs))])];
+                        Grad = Grad+[sum([Grads[k][i] for k in range(len(Grads))])];
+                Hv = comm.bcast(Hv, root=0);
+                Grad = comm.bcast(Grad,root=0);
                 return Hv, Grad;
             else:
                 Hv = [];
-                for i in range(len(self.x0)):
-                    Hv = Hv+[sum([Hvs[k][i] for k in range(len(Hvs))])];
+                if rank == 0:
+                    for i in range(len(self.x0)):
+                        Hv = Hv+[sum([Hvs[k][i] for k in range(len(Hvs))])];
+                Hv = comm.bcast(Hv, root=0);
                 return Hv;
         else:
             #Farward diff. tape for the second derivative
@@ -79,6 +85,9 @@ class Hessian:
             else:
                 return acc.jvp(backward);
     def vecprod(self,w):
+        """
+        This function returns the result of the matrix vector product
+        """
         if self.flag=="KERAS":
             model_weights = self.x0;
             u = np.zeros(w.shape[0],)
@@ -97,23 +106,17 @@ class Hessian:
             tindex = util_shape_product([model_weights[0].shape]) #row where we end the filling
             #Column where we start the filling;
             for s in range(len(model_weights)-1):
-                layerH = self.action(v);
                 #removeing none in the layerH
+                layerH = self.action(v);
                 layerH = [ tf.Variable([0]) if l==None else l for l in layerH];
                 u[bindex:tindex] = layerH[s].numpy().reshape(util_shape_product([model_weights[s].shape]));
                 bindex = tindex;
                 tindex = tindex+util_shape_product([model_weights[s+1].shape])
             u[bindex:tindex] = layerH[-1].numpy().reshape(util_shape_product([model_weights[-1].shape]));
-            return u;
-    def mat(self,grad=False):
+        return u;
+    def mat(self):
         """
-        Setting up the MPI support
-        --------------------------
-        My idea for parallelizing the code is very stupid, I devide the construction of the 
-        canonical base among the processes and the evaluation of the Hessian vector product
-        among the same process. Then we use one last process to sum the result Hessian into
-        the final Hessian.
-        UZ
+        This function assemble the full Hessian of the NN
         """
         comm = self.comm;
         nprs = comm.Get_size()
@@ -124,95 +127,29 @@ class Hessian:
         rank = comm.Get_rank();
 
         N = util_shape_product([layer.shape for layer in model_weights]);
-        matH = np.zeros((N,N));
-        Grad = np.zeros((N,));
-
+        matH = np.zeros((N,N),dtype=np.float32);
+        Grad = np.zeros((N,),dtype=np.float32);
         if self.flag == "KERAS":
-            if (grad):
-                #Cycling over the number of layer in the NN
-                for k in range(len(model_weights)):
-                    #Cycling over the possible combination of the canonical base with 1.0 in the 
-                    #layer k.
-                    NBase = np.array_split(range(util_shape_product([model_weights[k].shape])),nsect);
-                    for i in self.new_tqdm(NBase[rank]): #range(util_shape_product([model_weights[k].shape])):
-                        v = [];
-                        #Cyling over the number of layer in the NN to build the vector of the conical
-                        #base.
-                        for j in range(len(model_weights)):
-                            vj = np.zeros((util_shape_product([model_weights[j].shape]),));
-                            if j == k:
-                                vj[i] = 1.0;
-                            vj = tf.Variable(vj, dtype=np.float32);
-                            vj = tf.reshape(vj, model_weights[j].shape);
-                            v = v + [vj];
-                        #Filling the Hessian Matrix
-                        bindex = 0 #row where we start the filling
-                        tindex = util_shape_product([model_weights[0].shape]) #row where we end the filling
-                        #Column where we start the filling;
-                        starti = util_shape_product([model_weights[r].shape for r in range(k)])
-                        for s in range(len(model_weights)-1):
-                            layerGrad, layerH =self.action(v, grad=True)
-                            Grad[bindex:tindex] = layerGrad[s].numpy().reshape(util_shape_product([model_weights[s].shape]),);
-                            matH[bindex:tindex,starti+i] =layerH[s].numpy().reshape(util_shape_product([model_weights[s].shape]));
-                            bindex = tindex;
-                            tindex = tindex+util_shape_product([model_weights[s+1].shape])
-                        layerGrad, layerH =self.action(v, grad=True)
-                        Grad[bindex:tindex] = layerGrad[-1].numpy().reshape(util_shape_product([model_weights[-1].shape]),);
-                        matH[bindex:tindex,starti+i] =layerH[-1].numpy().reshape(util_shape_product([model_weights[-1].shape]));
-                matH = comm.gather(matH,root=0);
-            else:
-                #Cycling over the number of layer in the NN
-                for k in range(len(model_weights)):
-                    #Cycling over the possible combination of the canonical base with 1.0 in the 
-                    #layer k.
-                    Base = util_shape_product([model_weights[k].shape]);
-                    NBase = np.array_split(range(Base),nsect);
-                    for i in self.new_tqdm(NBase[rank]):
-                        v = [];
-                        #Cyling over the number of layer in the NN to build the vector of the conical
-                        #base.
-                        for j in range(len(model_weights)):
-                            vj = np.zeros((util_shape_product([model_weights[j].shape]),));
-                            if j == k:
-                                vj[i] = 1.0;
-                            vj = tf.Variable(vj, dtype=np.float32);
-                            vj = tf.reshape(vj, model_weights[j].shape);
-                            v = v + [vj];
-                        #Filling the Hessian Matrix
-                        bindex = 0 #row where we start the filling
-                        tindex = util_shape_product([model_weights[0].shape]) #row where we end the filling
-                        #Column where we start the filling;
-                        starti = util_shape_product([model_weights[r].shape for r in range(k)])
-                        for s in range(len(model_weights)-1):
-                            layerH = self.action(v);
-                            #removeing none in the layerH
-                            layerH = [ tf.Variable([0]) if l==None else l for l in layerH];
-                            matH[bindex:tindex,starti+i] = layerH[s].numpy().reshape(util_shape_product([model_weights[s].shape]));
-                            bindex = tindex;
-                            tindex = tindex+util_shape_product([model_weights[s+1].shape])
-                        matH[bindex:tindex,starti+i] = layerH[-1].numpy().reshape(util_shape_product([model_weights[-1].shape]));
-                matH = comm.gather(matH,root=0);
-        if (grad):
-            if rank == 0:
-                return sum(matH), sum(Grad);
-            else:
-                return 1;
-        else:
-            if rank == 0:
-                return sum(matH);
-            else:
-                return 1;
-    def RandMatSVD(self,k,p):
+            NBase = util_shape_product([layer.shape for layer in model_weights]);
+            for k in range(NBase):
+                v = np.zeros((NBase,));
+                v[k] = 1.
+                matH[k,:] = self.vecprod(v);
+        return matH;
+    def RandMatSVD(self,k,p,Krylov=1):
         model_weights = self.x0;
         if self.flag == "KERAS":
             N = util_shape_product([layer.shape for layer in model_weights]);
             l = k+p;
             mu, sigma = 0, 1 # mean and standard deviation
             omega = np.random.normal(mu, sigma, (N,l))
-            Y = np.zeros((N,l));
-            Bt = np.zeros((N,l));
+            Y = np.zeros((N,Krylov*l));
+            Bt = np.zeros((N,Krylov*l));
             for i in range(l):
-                Y[:,i] = self.vecprod(omega[:,i].reshape(N,1))
+                    Y[:,i] = self.vecprod(omega[:,i].reshape(N,1))
+            for j in range(1,Krylov):
+                for i in range(l):
+                    Y[:,j*l+i] = self.vecprod(Y[:,(j-1)*l+i].reshape(N,1))
             Q,R = la.qr(Y);
             #HALKO 4.1
             #
