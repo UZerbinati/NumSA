@@ -29,7 +29,7 @@ test_dataset = test_dataset.batch(batch_size)
 #Keras Sequential allow us to place one layer after the other
 model = tf.keras.Sequential([
     tf.keras.layers.Flatten(input_shape=(28, 28)),#Vectorifying layer
-    tf.keras.layers.Dense(20, activation='sigmoid'),#128 weights layer
+    tf.keras.layers.Dense(128, activation='sigmoid'),#128 weights layer
     tf.keras.layers.Dense(10)#10 leyers weights.
 ])
 print("Number of trainable layers {}".format(len(model.trainable_weights)))
@@ -48,7 +48,7 @@ train_acc_metric = tf.keras.metrics.SparseCategoricalAccuracy()
 test_acc_metric = tf.keras.metrics.SparseCategoricalAccuracy()
 
 #Defining number of iterations
-epochs = 21
+epochs = 400
 for epoch in tqdm(range(epochs)):
     # Iterate over the batches of the dataset.
     for step, (batch_train_images, batch_train_labels) in enumerate(train_dataset):
@@ -91,9 +91,9 @@ def Loss(weights):
     # Compute the loss value for this minibatch.
     loss_value = loss_fn(batch_train_labels, logits);
     return loss_value;
-H = Hessian(Loss,model.trainable_weights)
+H = Hessian(Loss,model.trainable_weights,"KERAS")
 H.SwitchVerbose()
-fullH= H.mat(model.trainable_weights,"KERAS");
+fullH= H.mat();
 
 plt.figure(figsize=(12,12))
 plt.imshow(np.log10(abs(fullH)+1e-16))
