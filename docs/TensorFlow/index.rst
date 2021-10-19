@@ -5,3 +5,5 @@ TensorFlow
 
    Hessian.ipynb
    MNIST.ipynb
+   RandomSVD.ipynb
+   NewtonMethod.ipynb

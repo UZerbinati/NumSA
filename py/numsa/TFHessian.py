@@ -33,6 +33,21 @@ class Hessian:
         	self.new_tqdm = lambda x : x  	
         else:
         	self.new_tqdm = tqdm
+    def grad(self):
+        if "comm" in self.LossFunction.__code__.co_varnames:
+            with tf.GradientTape() as tape:
+                # It is important to evaluate the lost function inside
+                # the two tape in order to use automatic diff. 
+                LossEvaluation = self.LossFunction(self.x0,comm)
+                backward = tape.gradient(LossEvaluation, self.x0);
+        else:
+            with tf.GradientTape() as tape:
+                # It is important to evaluate the lost function inside
+                # the two tape in order to use automatic diff. 
+                LossEvaluation = self.LossFunction(self.x0)
+                backward = tape.gradient(LossEvaluation, self.x0);
+
+        return backward;
     def action(self,v,grad=False):
         """
         If the grad option is True, also the gradient is returned.
@@ -84,6 +99,23 @@ class Hessian:
                 return backward, acc.jvp(backward);
             else:
                 return acc.jvp(backward);
+    def vec(self, layerGrad):
+        if self.flag=="KERAS":
+            model_weights = self.x0;
+            N = util_shape_product([layer.shape for layer in model_weights]);
+            Grad = np.zeros((N,));
+            for k in range(len(model_weights)):
+                #Filling the Hessian Matrix
+                bindex = 0 #row where we start the filling
+                tindex = util_shape_product([model_weights[0].shape]) #row where we end the filling
+                #Column where we start the filling;
+                starti = util_shape_product([model_weights[r].shape for r in range(k)])
+                for s in range(len(model_weights)-1):
+                    Grad[bindex:tindex] = layerGrad[s].numpy().reshape(util_shape_product([model_weights[s].shape]),);
+                    bindex = tindex;
+                    tindex = tindex+util_shape_product([model_weights[s+1].shape])
+                Grad[bindex:tindex] = layerGrad[-1].numpy().reshape(util_shape_product([model_weights[-1].shape]),);
+            return Grad;
     def vecprod(self,w):
         """
         This function returns the result of the matrix vector product
@@ -113,6 +145,11 @@ class Hessian:
                 bindex = tindex;
                 tindex = tindex+util_shape_product([model_weights[s+1].shape])
             u[bindex:tindex] = layerH[-1].numpy().reshape(util_shape_product([model_weights[-1].shape]));
+        else:
+            wtf =  tf.Variable(w,dtype=np.float32);
+            wtf = tf.reshape(wtf,(w.shape[0],))
+            u = self.action(wtf).numpy().reshape((w.shape[0],));
+
         return u;
     def mat(self):
         """
@@ -140,39 +177,43 @@ class Hessian:
         model_weights = self.x0;
         if self.flag == "KERAS":
             N = util_shape_product([layer.shape for layer in model_weights]);
-            l = k+p;
-            mu, sigma = 0, 1 # mean and standard deviation
-            omega = np.random.normal(mu, sigma, (N,l))
-            Y = np.zeros((N,Krylov*l));
-            Bt = np.zeros((N,Krylov*l));
+        else:
+            N = model_weights.shape[0];
+        l = k+p;
+        mu, sigma = 0, 1 # mean and standard deviation
+        omega = np.random.normal(mu, sigma, (N,l))
+        Y = np.zeros((N,Krylov*l));
+        Bt = np.zeros((N,Krylov*l));
+        for i in range(l):
+                Y[:,i] = self.vecprod(omega[:,i].reshape(N,1))
+        
+        for j in range(1,Krylov):
             for i in range(l):
-                    Y[:,i] = self.vecprod(omega[:,i].reshape(N,1))
-            
-            for j in range(1,Krylov):
-                for i in range(l):
-                    Y[:,j*l+i] = self.vecprod(Y[:,(j-1)*l+i].reshape(N,1))
-            
-            Q,R = la.qr(Y);
-            #HALKO 4.1
-            #
-            #(N,l) Y = A * Omega (N,N)(N,l)
-            #(N,l)(l,l) QR = Y (N,l)
-            #(l,N) B = Q^t A (l,N)(N,N)
-            #Bt = A^t Q = AQ
-            #USV^t = B
-            Q,R = la.qr(Y);
-            for i in range(l):
-                Bt[:,i] = self.vecprod(Q[:,i])
-            B = Bt.T
-            U, sigma, Vt = la.svd(B, full_matrices=False); 
-            if Krylov == 1:
-                return Q @ U, sigma, Vt;
-            else:
-                return U, sigma, Vt;
+                Y[:,j*l+i] = self.vecprod(Y[:,(j-1)*l+i].reshape(N,1))
+        
+        Q,R = la.qr(Y);
+        #HALKO 4.1
+        #
+        #(N,l) Y = A * Omega (N,N)(N,l)
+        #(N,l)(l,l) QR = Y (N,l)
+        #(l,N) B = Q^t A (l,N)(N,N)
+        #Bt = A^t Q = AQ
+        #USV^t = B
+        Q,R = la.qr(Y);
+        for i in range(l):
+            Bt[:,i] = self.vecprod(Q[:,i])
+        B = Bt.T
+        U, sigma, Vt = la.svd(B, full_matrices=False); 
+        if Krylov == 1:
+            return Q @ U, sigma, Vt;
+        else:
+            return U, sigma, Vt;
     def pCG(self,b,k,p,itmax=1000,tol=1e-8,KOrd=1,mu=0,var=1):
         model_weights = self.x0;
-        N = util_shape_product([layer.shape for layer in model_weights]);
-
+        if self.flag=="KERAS":
+            N = util_shape_product([layer.shape for layer in model_weights]);
+        else:
+            N = model_weights.shape[0];
         #We now build the preconditioner 
         # USVt = A
         # Vt^{-1} S^{-1] U^{-1} = A^{-1}
@@ -189,7 +230,8 @@ class Hessian:
             q = self.vecprod(p).reshape(N,1);
             alpha = (r.T@z)/(p.T@q);
             if alpha[0][0] < 0:
-                print("Iteration {} residual {}, alpha {} < 0".format(k,la.norm(r)/la.norm(x),alpha[0][0]));
+                if self.verbose == True:
+                    print("Iteration {} residual {}, alpha {} < 0".format(k,la.norm(r)/la.norm(x),alpha[0][0]));
                 return x;
             x = x + alpha*p;
             rr = r - alpha*q;
@@ -202,6 +244,7 @@ class Hessian:
             p = z+beta*p;
             if self.verbose == True:
                 print("Iteration {} residual {}, alpha {}".format(k,la.norm(r)/la.norm(x),alpha[0][0]));
+        print("Max itetation reached !");
         return x;
     def eig(self,flag,itmax=10):
         if flag == "pi-max":
