@@ -19,5 +19,6 @@ before_install:
 script: 
         - cd ..
         - cd tests
-        - pytest .
+        - pytest . --show-capture=no --disable-warnings -q
+
 
