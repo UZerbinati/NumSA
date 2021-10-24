@@ -254,7 +254,7 @@ class Hessian:
                 v = self.action(v);
                 v = (1/tf.norm(v))*v;
             return tf.tensordot(v,self.action(v),1);
-    def matrix(self,flag,grad=False):
+    def matrix(self,grad=False):
         """
         Setting up the MPI support
         --------------------------
@@ -276,7 +276,7 @@ class Hessian:
         matH = np.zeros((N,N));
         Grad = np.zeros((N,));
 
-        if flag == "KERAS":
+        if self.flag == "KERAS":
             if (grad):
                 #Cycling over the number of layer in the NN
                 for k in range(len(model_weights)):

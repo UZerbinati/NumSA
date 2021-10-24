@@ -9,6 +9,7 @@ Welcome to Suite's documentation!
 .. toctree::
    GettingStarted.ipynb
    TensorFlow/index
+   PDE/index
 Indices
 ==================
 

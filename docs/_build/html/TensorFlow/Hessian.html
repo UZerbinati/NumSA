@@ -437,8 +437,8 @@ Convergence order 3.160964012145996
     <span class="k">for</span> <span class="n">step</span><span class="p">,</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">training_dataset</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">Ord</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
             <span class="c1"># Compute Hessian and Gradients</span>
-            <span class="n">H</span> <span class="o">=</span> <span class="n">Hessian</span><span class="p">(</span><span class="n">Loss</span><span class="p">,</span><span class="n">model</span><span class="o">.</span><span class="n">trainable_weights</span><span class="p">)</span>
-            <span class="n">fullH</span><span class="p">,</span> <span class="n">grad</span> <span class="o">=</span> <span class="n">H</span><span class="o">.</span><span class="n">mat</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">trainable_weights</span><span class="p">,</span><span class="s2">&quot;KERAS&quot;</span><span class="p">,</span><span class="n">grad</span><span class="o">=</span><span class="kc">True</span><span class="p">);</span>
+            <span class="n">H</span> <span class="o">=</span> <span class="n">Hessian</span><span class="p">(</span><span class="n">Loss</span><span class="p">,</span><span class="n">model</span><span class="o">.</span><span class="n">trainable_weights</span><span class="p">,</span><span class="s2">&quot;KERAS&quot;</span><span class="p">)</span>
+            <span class="n">fullH</span><span class="p">,</span> <span class="n">grad</span> <span class="o">=</span> <span class="n">H</span><span class="o">.</span><span class="n">mat</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">trainable_weights</span><span class="p">,</span><span class="n">grad</span><span class="o">=</span><span class="kc">True</span><span class="p">);</span>
             <span class="c1">#Reshaping the Hessians</span>
             <span class="n">grads</span> <span class="o">=</span> <span class="p">[</span><span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">grad</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">),</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
                      <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">grad</span><span class="p">[</span><span class="mi">4</span><span class="p">:</span><span class="mi">6</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">2</span><span class="p">,),</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
@@ -466,7 +466,7 @@ Convergence order 3.160964012145996
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<script type="application/vnd.jupyter.widget-view+json">{"model_id": "e4c9b3ed99e54e75bfe78e45e64988b9", "version_major": 2, "version_minor": 0}</script></div>
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "4abed367ce694e36b67a6b5f78733317", "version_major": 2, "version_minor": 0}</script></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
@@ -474,9 +474,9 @@ Convergence order 3.160964012145996
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 Test 0 with data [0. 0.] produce [[0.]] .
-Test 1 with data [0. 1.] produce [[1.]] .
-Test 2 with data [1. 0.] produce [[1.]] .
-Test 3 with data [1. 1.] produce [[1.]] .
+Test 1 with data [0. 1.] produce [[0.]] .
+Test 2 with data [1. 0.] produce [[0.]] .
+Test 3 with data [1. 1.] produce [[0.]] .
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -509,14 +509,24 @@ Number of weights trainable per layer 3, (1,)
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="k">def</span> <span class="nf">Loss</span><span class="p">(</span><span class="n">weights</span><span class="p">):</span>
+<span></span><span class="c1">#Function written for parallel</span>
+<span class="k">def</span> <span class="nf">Loss</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span><span class="n">comm</span><span class="p">):</span>
+    <span class="n">batches</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array_split</span><span class="p">(</span><span class="n">training_data</span><span class="p">,</span><span class="n">comm</span><span class="o">.</span><span class="n">Get_size</span><span class="p">());</span>
+    <span class="n">predictions</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">batches</span><span class="p">[</span><span class="n">comm</span><span class="o">.</span><span class="n">Get_rank</span><span class="p">()],</span> <span class="n">training</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="c1">#Logits for this minibatch</span>
+    <span class="c1"># Compute the loss value for this minibatch.</span>
+    <span class="n">loss_value</span> <span class="o">=</span> <span class="n">loss_fn</span><span class="p">(</span><span class="n">training_label</span><span class="p">,</span> <span class="n">predictions</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">loss_value</span><span class="p">;</span>
+
+<span class="c1">#Function written for serial</span>
+<span class="k">def</span> <span class="nf">Loss</span><span class="p">(</span><span class="n">weights</span><span class="p">):</span>
     <span class="n">predictions</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">training_data</span><span class="p">,</span> <span class="n">training</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="c1">#Logits for this minibatch</span>
     <span class="c1"># Compute the loss value for this minibatch.</span>
     <span class="n">loss_value</span> <span class="o">=</span> <span class="n">loss_fn</span><span class="p">(</span><span class="n">training_label</span><span class="p">,</span> <span class="n">predictions</span><span class="p">);</span>
     <span class="k">return</span> <span class="n">loss_value</span><span class="p">;</span>
-<span class="n">H</span> <span class="o">=</span> <span class="n">Hessian</span><span class="p">(</span><span class="n">Loss</span><span class="p">,</span><span class="n">model</span><span class="o">.</span><span class="n">trainable_weights</span><span class="p">)</span>
-<span class="n">H</span><span class="o">.</span><span class="n">SwitchVerbose</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
-<span class="n">fullH</span><span class="o">=</span> <span class="n">H</span><span class="o">.</span><span class="n">mat</span><span class="p">(</span><span class="s2">&quot;KERAS&quot;</span><span class="p">);</span>
+
+<span class="n">H</span> <span class="o">=</span> <span class="n">Hessian</span><span class="p">(</span><span class="n">Loss</span><span class="p">,</span><span class="n">model</span><span class="o">.</span><span class="n">trainable_weights</span><span class="p">,</span><span class="s2">&quot;KERAS&quot;</span><span class="p">)</span>
+<span class="n">H</span><span class="o">.</span><span class="n">SwitchVerbose</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">fullH</span><span class="o">=</span> <span class="n">H</span><span class="o">.</span><span class="n">mat</span><span class="p">();</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">fullH</span><span class="p">)</span><span class="o">+</span><span class="mf">1e-16</span><span class="p">)))</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">()</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">fullH</span><span class="p">)))</span>
@@ -528,7 +538,8 @@ Number of weights trainable per layer 3, (1,)
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-0.0011907909065485
+MPI the world is 1 process big !
+0.00039930374
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -543,8 +554,62 @@ Number of weights trainable per layer 3, (1,)
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">fullH</span><span class="o">=</span> <span class="n">H</span><span class="o">.</span><span class="n">matrix</span><span class="p">(</span><span class="s2">&quot;KERAS&quot;</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">fullH</span><span class="p">)</span><span class="o">+</span><span class="mf">1e-16</span><span class="p">)))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">fullH</span><span class="p">)))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+  0%|          | 0/4 [00:00&lt;?, ?it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+MPI the world is 1 process big !
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|██████████| 4/4 [00:00&lt;00:00, 38.37it/s]
+100%|██████████| 2/2 [00:00&lt;00:00, 43.11it/s]
+100%|██████████| 2/2 [00:00&lt;00:00, 42.38it/s]
+100%|██████████| 1/1 [00:00&lt;00:00, 42.90it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+0.0003993037389591336
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/TensorFlow_Hessian_11_4.png" src="../_images/TensorFlow_Hessian_11_4.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
 <span></span><span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">((</span><span class="nb">abs</span><span class="p">(</span><span class="n">fullH</span><span class="nd">@w</span><span class="o">-</span><span class="p">(</span><span class="n">H</span><span class="o">.</span><span class="n">vecprod</span><span class="p">(</span><span class="n">w</span><span class="p">,</span><span class="s2">&quot;KERAS&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span><span class="mi">1</span><span class="p">)))</span><span class="o">&lt;</span><span class="mf">1e-6</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">((</span><span class="nb">abs</span><span class="p">(</span><span class="n">fullH</span><span class="nd">@w</span><span class="o">-</span><span class="p">(</span><span class="n">H</span><span class="o">.</span><span class="n">vecprod</span><span class="p">(</span><span class="n">w</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span><span class="mi">1</span><span class="p">)))</span><span class="o">&lt;</span><span class="mf">1e-6</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">())</span>
 </pre></div>
 </div>
 </div>
@@ -557,23 +622,175 @@ True
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
-<span></span><span class="n">sigmas</span> <span class="o">=</span> <span class="n">H</span><span class="o">.</span><span class="n">RandMatSVD</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="s2">&quot;KERAS&quot;</span><span class="p">);</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">sigmas</span><span class="p">)</span>
+<span></span><span class="n">_</span><span class="p">,</span><span class="n">sigmas</span><span class="p">,</span><span class="n">_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">svd</span><span class="p">(</span><span class="n">fullH</span><span class="p">)</span>
+<span class="n">_</span><span class="p">,</span><span class="n">Rsigmas</span><span class="p">,</span><span class="n">_</span> <span class="o">=</span> <span class="n">H</span><span class="o">.</span><span class="n">RandMatSVD</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="mi">2</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="nb">abs</span><span class="p">(</span><span class="n">Rsigmas</span><span class="p">[</span><span class="n">r</span><span class="p">]</span><span class="o">-</span><span class="n">sigmas</span><span class="p">[</span><span class="n">r</span><span class="p">])</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">Rsigmas</span><span class="p">))])</span>
 </pre></div>
 </div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[&lt;matplotlib.lines.Line2D at 0x7f336d4e3100&gt;]
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/TensorFlow_Hessian_13_1.png" src="../_images/TensorFlow_Hessian_13_1.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">_</span><span class="p">,</span><span class="n">KRsigmas</span><span class="p">,</span><span class="n">_</span> <span class="o">=</span> <span class="n">H</span><span class="o">.</span><span class="n">RandMatSVD</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="n">Krylov</span><span class="o">=</span><span class="mi">3</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="nb">abs</span><span class="p">(</span><span class="n">KRsigmas</span><span class="p">[</span><span class="n">r</span><span class="p">]</span><span class="o">-</span><span class="n">sigmas</span><span class="p">[</span><span class="n">r</span><span class="p">])</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">KRsigmas</span><span class="p">))])</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[&lt;matplotlib.lines.Line2D at 0x7f336d445f10&gt;]
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/TensorFlow_Hessian_14_1.png" src="../_images/TensorFlow_Hessian_14_1.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">9</span><span class="p">,</span><span class="mi">1</span><span class="p">));</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">la</span><span class="o">.</span><span class="n">eig</span><span class="p">(</span><span class="n">fullH</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">H</span><span class="o">.</span><span class="n">pCG</span><span class="p">(</span><span class="n">b</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[ 3.05964799e+00  4.48098994e-01 -3.85493644e-01  1.37021044e-02
+  5.93803975e-04 -1.53009930e-08 -3.46201486e-09 -1.07528117e-09
+  1.05662170e-09]
+Iteration 0 residual 0.8491937201068991, alpha -5.656056460522596 &lt; 0
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+(9, 1)
+</pre></div></div>
+</div>
+</div>
+<div class="section" id="Hessian-Based-Training">
+<h2>Hessian Based Training<a class="headerlink" href="#Hessian-Based-Training" title="Permalink to this headline">¶</a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">Ord</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">optimizers</span><span class="o">.</span><span class="n">SGD</span><span class="p">(</span><span class="n">learning_rate</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+<span class="n">init</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">initializers</span><span class="o">.</span><span class="n">RandomNormal</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">stddev</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<span class="c1"># Inputs</span>
+<span class="n">training_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">],[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">],[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]],</span> <span class="s2">&quot;float32&quot;</span><span class="p">)</span>
+<span class="c1"># Outputs</span>
+
+<span class="n">training_label</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">],[</span><span class="mi">1</span><span class="p">],[</span><span class="mi">1</span><span class="p">],[</span><span class="mi">0</span><span class="p">]],</span> <span class="s2">&quot;float32&quot;</span><span class="p">)</span>
+<span class="n">training_dataset</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Dataset</span><span class="o">.</span><span class="n">from_tensor_slices</span><span class="p">((</span><span class="n">training_data</span><span class="p">,</span> <span class="n">training_label</span><span class="p">))</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">Sequential</span><span class="p">([</span>
+    <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="n">input_dim</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;softmax&#39;</span><span class="p">,</span><span class="n">bias_initializer</span><span class="o">=</span><span class="n">init</span><span class="p">),</span><span class="c1">#2 nodes hidden layer</span>
+    <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="p">])</span>
+<span class="k">def</span> <span class="nf">loss_fn</span><span class="p">(</span><span class="n">y</span><span class="p">,</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">tf</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">reduce_mean</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">squared_difference</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">));</span>
+<span class="k">def</span> <span class="nf">Loss</span><span class="p">(</span><span class="n">weights</span><span class="p">):</span>
+    <span class="n">predictions</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">training_data</span><span class="p">,</span> <span class="n">training</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="c1">#Logits for this minibatch</span>
+    <span class="c1"># Compute the loss value for this minibatch.</span>
+    <span class="n">loss_value</span> <span class="o">=</span> <span class="n">loss_fn</span><span class="p">(</span><span class="n">training_label</span><span class="p">,</span> <span class="n">predictions</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">loss_value</span><span class="p">;</span>
+<span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">200</span><span class="p">)):</span>
+    <span class="k">for</span> <span class="n">step</span><span class="p">,</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">training_dataset</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">GradientTape</span><span class="p">()</span> <span class="k">as</span> <span class="n">tape</span><span class="p">:</span>
+            <span class="c1"># Run the forward pass of the layer.</span>
+            <span class="c1"># The operations that the layer applies</span>
+            <span class="c1"># to its inputs are going to be recorded</span>
+            <span class="c1"># on the GradientTape.</span>
+            <span class="n">labels</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">training_data</span><span class="p">,</span> <span class="n">training</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># Logits for this minibatch</span>
+            <span class="c1"># Compute the loss value for this minibatch.</span>
+            <span class="n">loss_value</span> <span class="o">=</span> <span class="n">loss_fn</span><span class="p">(</span><span class="n">training_label</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span>
+            <span class="c1"># Use the gradient tape to automatically retrieve</span>
+            <span class="c1"># the gradients of the trainable variables with respect to the loss.</span>
+            <span class="n">grads</span> <span class="o">=</span> <span class="n">tape</span><span class="o">.</span><span class="n">gradient</span><span class="p">(</span><span class="n">loss_value</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">trainable_weights</span><span class="p">)</span>
+            <span class="n">H</span> <span class="o">=</span> <span class="n">Hessian</span><span class="p">(</span><span class="n">Loss</span><span class="p">,</span><span class="n">model</span><span class="o">.</span><span class="n">trainable_weights</span><span class="p">,</span><span class="s2">&quot;KERAS&quot;</span><span class="p">)</span>
+            <span class="n">Grad</span> <span class="o">=</span> <span class="n">H</span><span class="o">.</span><span class="n">vec</span><span class="p">(</span><span class="n">grads</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="mi">9</span><span class="p">,</span><span class="mi">1</span><span class="p">));</span>
+            <span class="n">q</span> <span class="o">=</span> <span class="n">H</span><span class="o">.</span><span class="n">pCG</span><span class="p">(</span><span class="n">Grad</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">2</span><span class="p">);</span>
+            <span class="n">search</span> <span class="o">=</span> <span class="p">[</span><span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">q</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">),</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+                     <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">q</span><span class="p">[</span><span class="mi">4</span><span class="p">:</span><span class="mi">6</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">2</span><span class="p">,),</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+                     <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">q</span><span class="p">[</span><span class="mi">6</span><span class="p">:</span><span class="mi">8</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+                     <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">q</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,),</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),]</span>
+    <span class="n">optimizer</span><span class="o">.</span><span class="n">apply_gradients</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">search</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">trainable_weights</span><span class="p">))</span>
+    <span class="k">if</span> <span class="nb">sum</span><span class="p">([</span><span class="nb">abs</span><span class="p">(</span><span class="n">y</span><span class="o">-</span><span class="n">tf</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">model</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">x</span><span class="p">]))))</span> <span class="k">for</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">)</span> <span class="ow">in</span> <span class="n">training_dataset</span><span class="p">])</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
+        <span class="k">break</span><span class="p">;</span>
+<span class="k">for</span> <span class="n">step</span><span class="p">,</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">training_dataset</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Test </span><span class="si">{}</span><span class="s2"> with data </span><span class="si">{}</span><span class="s2"> produce </span><span class="si">{}</span><span class="s2"> .&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">step</span><span class="p">,</span><span class="n">x</span><span class="p">,</span><span class="n">tf</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">model</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">x</span><span class="p">])))))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Test </span><span class="si">{}</span><span class="s2"> with data </span><span class="si">{}</span><span class="s2"> produce </span><span class="si">{}</span><span class="s2"> .&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">step</span><span class="p">,</span><span class="n">x</span><span class="p">,</span><span class="n">model</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">x</span><span class="p">]))))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "5685298e64834dc284b58fb12d1bf641", "version_major": 2, "version_minor": 0}</script></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-Shapes (9, 9),(9, 5)
-[3.16004298 0.0549584  0.0310593  0.02168263 0.01193106]
+Test 0 with data [0. 0.] produce [[0.]] .
+Test 0 with data [0. 0.] produce [[0.48190117]] .
+Test 1 with data [0. 1.] produce [[0.]] .
+Test 1 with data [0. 1.] produce [[0.46368325]] .
+Test 2 with data [1. 0.] produce [[1.]] .
+Test 2 with data [1. 0.] produce [[0.500142]] .
+Test 3 with data [1. 1.] produce [[0.]] .
+Test 3 with data [1. 1.] produce [[0.4818064]] .
 </pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span>
+</pre></div>
+</div>
 </div>
 </div>
 </div>
@@ -600,11 +817,14 @@ Shapes (9, 9),(9, 5)
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Hessian Example</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#Cubic-Lost-Function-and-Taylor-Expansion">Cubic Lost Function and Taylor Expansion</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#Very-Small-Neural-Network-Built-With-KERAS">Very Small Neural Network Built With KERAS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Hessian-Based-Training">Hessian Based Training</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="MNIST.html">MNIST Neural Network Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="RandomSVD.html">Random SVD</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../PDE/index.html">Partial Differential Equations (PDE)</a></li>
 </ul>
 
 <div class="relations">

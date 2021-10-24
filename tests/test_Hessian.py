@@ -184,3 +184,31 @@ def test_constant_weights():
     fullH = H.mat();
     print("Shape {}".format(fullH.shape));
     assert  (np.sum(fullH[:,8])+np.sum(fullH[8,:])+fullH[8,8]+fullH[7,7]+fullH[6,6]+fullH[6,7]+fullH[7,6])==0;
+
+def test_Newton():
+    itmax = 100; # Number of epoch.
+    tol = 1e-8
+    step_size = 1; #Learning rate
+    def Loss(x):
+        return (x[0]**2)*(x[1]**2)+x[0]*x[1];
+    #Defining the Hessian class for the above loss function in x0
+    x = tf.Variable(0.1*np.ones((2,1),dtype=np.float32))
+    H =  Hessian(Loss,x)
+    grad = H.grad().numpy();
+    print("Computed the  first gradient ...")
+    q = H.pCG(grad,1,1,tol=tol,itmax=100);
+    print("Computed search search diratcion ...")
+    print("Entering the Netwton optimization loop")
+    for it in tqdm(range(itmax)):
+        x = x - tf.constant(step_size,dtype=np.float32)*tf.Variable(q,dtype=np.float32);
+        x =  tf.Variable(x)
+        if it%50 == 0:
+            print("Lost funciton at this iteration {}  and gradient norm {}".format(Loss(x),np.linalg.norm(grad)));
+        if np.linalg.norm(grad)<tol:
+            print("Lost funciton at this iteration {}, gradient norm {} and is achived at point {}"
+          .format(Loss(x),np.linalg.norm(grad),x));
+            break
+        H =  Hessian(Loss,x)
+        grad = H.grad().numpy();
+        q = H.pCG(grad,1,1,tol=tol,itmax=100);
+    assert Loss(x)<tol;

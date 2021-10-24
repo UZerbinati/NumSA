@@ -19,6 +19,7 @@
     <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "tex2jax_ignore|mathjax_ignore|document", "processClass": "tex2jax_process|mathjax_process|math|output_area"}})</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Random SVD" href="RandomSVD.html" />
     <link rel="prev" title="Hessian Example" href="Hessian.html" />
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
@@ -497,9 +498,9 @@ Validation acc: 0.7548
     <span class="c1"># Compute the loss value for this minibatch.</span>
     <span class="n">loss_value</span> <span class="o">=</span> <span class="n">loss_fn</span><span class="p">(</span><span class="n">batch_train_labels</span><span class="p">,</span> <span class="n">logits</span><span class="p">);</span>
     <span class="k">return</span> <span class="n">loss_value</span><span class="p">;</span>
-<span class="n">H</span> <span class="o">=</span> <span class="n">Hessian</span><span class="p">(</span><span class="n">Loss</span><span class="p">,</span><span class="n">model</span><span class="o">.</span><span class="n">trainable_weights</span><span class="p">)</span>
+<span class="n">H</span> <span class="o">=</span> <span class="n">Hessian</span><span class="p">(</span><span class="n">Loss</span><span class="p">,</span><span class="n">model</span><span class="o">.</span><span class="n">trainable_weights</span><span class="p">,</span><span class="s2">&quot;KERAS&quot;</span><span class="p">)</span>
 <span class="n">H</span><span class="o">.</span><span class="n">SwitchVerbose</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
-<span class="n">fullH</span><span class="o">=</span> <span class="n">H</span><span class="o">.</span><span class="n">mat</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">trainable_weights</span><span class="p">,</span><span class="s2">&quot;KERAS&quot;</span><span class="p">);</span>
+<span class="n">fullH</span><span class="o">=</span> <span class="n">H</span><span class="o">.</span><span class="n">mat</span><span class="p">();</span>
 </pre></div>
 </div>
 </div>
@@ -580,8 +581,10 @@ MPI the world is 1 process big !
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">TensorFlow</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="Hessian.html">Hessian Example</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">MNIST Neural Network Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="RandomSVD.html">Random SVD</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../PDE/index.html">Partial Differential Equations (PDE)</a></li>
 </ul>
 
 <div class="relations">
@@ -590,6 +593,7 @@ MPI the world is 1 process big !
   <li><a href="../index.html">Documentation overview</a><ul>
   <li><a href="index.html">TensorFlow</a><ul>
       <li>Previous: <a href="Hessian.html" title="previous chapter">Hessian Example</a></li>
+      <li>Next: <a href="RandomSVD.html" title="next chapter">Random SVD</a></li>
   </ul></li>
   </ul></li>
 </ul>

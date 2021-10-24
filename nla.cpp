@@ -14,7 +14,3 @@ namespace py = pybind11;
 
 #include "la/svd.cpp"
 
-PYBIND11_MODULE(fem, module) {
-    module.attr("release") = "0.0.1";
-    SVDBind(module);
-}
