@@ -38,7 +38,7 @@ class Hessian:
             with tf.GradientTape() as tape:
                 # It is important to evaluate the lost function inside
                 # the two tape in order to use automatic diff. 
-                LossEvaluation = self.LossFunction(self.x0,comm)
+                LossEvaluation = self.LossFunction(self.x0,self.comm)
                 backward = tape.gradient(LossEvaluation, self.x0);
         else:
             with tf.GradientTape() as tape:
@@ -68,23 +68,42 @@ class Hessian:
                     #print("gradient: ",backward)
             Hvs = comm.gather(acc.jvp(backward), root=0);
             Grads = comm.gather(backward,root=0); 
-            if grad:
-                Hv = []
-                Grad = [];
-                if rank == 0:
-                    for i in range(len(self.x0)):
-                        Hv = Hv+[sum([Hvs[k][i] for k in range(len(Hvs))])];
-                        Grad = Grad+[sum([Grads[k][i] for k in range(len(Grads))])];
-                Hv = comm.bcast(Hv, root=0);
-                Grad = comm.bcast(Grad,root=0);
-                return Hv, Grad;
+            if self.flag=="KERAS":
+                length = len(self.x0);
+                if grad:
+                    Hv = []
+                    Grad = [];
+                    if rank == 0:
+                        for i in range(length):
+                            Hv = Hv+[sum([Hvs[k][i] for k in range(len(Hvs))])];
+                            Grad = Grad+[sum([Grads[k][i] for k in range(len(Grads))])];
+                    Hv = comm.bcast(Hv, root=0);
+                    Grad = comm.bcast(Grad,root=0);
+                    return Hv, Grad;
+                else:
+                    Hv = [];
+                    if rank == 0:
+                        for i in range(length):
+                            Hv = Hv+[sum([Hvs[k][i] for k in range(len(Hvs))])];
+                    Hv = comm.bcast(Hv, root=0);
+                    return Hv;
             else:
-                Hv = [];
-                if rank == 0:
-                    for i in range(len(self.x0)):
-                        Hv = Hv+[sum([Hvs[k][i] for k in range(len(Hvs))])];
-                Hv = comm.bcast(Hv, root=0);
-                return Hv;
+                if grad:
+                    Hv = []
+                    Grad = [];
+                    if rank == 0:
+                        Hv = sum([Hvs[k] for k in range(len(Hvs))]);
+                        Grad = sum([Grads[k] for k in range(len(Grads))]);
+                    Hv = comm.bcast(Hv, root=0);
+                    Grad = comm.bcast(Grad,root=0);
+                    return Hv, Grad;
+                else:
+                    Hv = [];
+                    if rank == 0:
+                        Hv = sum([Hvs[k] for k in range(len(Hvs))]);
+                    Hv = comm.bcast(Hv, root=0);
+                    return Hv;
+
         else:
             #Farward diff. tape for the second derivative
             with tf.autodiff.ForwardAccumulator(self.x0,v) as acc:
@@ -147,9 +166,8 @@ class Hessian:
             u[bindex:tindex] = layerH[-1].numpy().reshape(util_shape_product([model_weights[-1].shape]));
         else:
             wtf =  tf.Variable(w,dtype=np.float32);
-            wtf = tf.reshape(wtf,(w.shape[0],))
+            wtf = tf.reshape(wtf,(w.shape[0],)) 
             u = self.action(wtf).numpy().reshape((w.shape[0],));
-
         return u;
     def mat(self):
         """
