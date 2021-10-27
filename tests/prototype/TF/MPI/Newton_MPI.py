@@ -4,13 +4,17 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from numsa.TFHessian import *
-from mpi4py import *
+from mpi4py import MPI
+comm = MPI.COMM_WORLD
+
 import dsdl
 
 ds = dsdl.load("a1a")
 
 X, Y = ds.get_train()
 print(X.shape, Y.shape)
+print("World Size, ", comm.Get_size());
+indx = np.array_split(range(X.shape[0]),int(comm.Get_size()));
 
 #Setting the parameter of this run, we will use optimization nomeclature not ML one.
 itmax = 100; # Number of epoch.
@@ -21,8 +25,8 @@ Err = [];
 def Loss(x,comm):
     rank = comm.Get_rank();
     S = tf.Variable(0.0);
-    pX =X[rank*100:(rank+1)*100]
-    pY =Y[rank*100:(rank+1)*100]
+    pX =X[indx[rank]]
+    pY =Y[indx[rank]]
     for j in range(pX.shape[0]):
         a = tf.constant((pX[j,:].todense().reshape(119,1)),dtype=np.float32);
         b = tf.constant(pY[j],dtype=np.float32)
@@ -49,7 +53,7 @@ for it in tqdm(range(itmax)):
     H =  Hessian(Loss,x)
     grad = H.grad().numpy();
     q = grad #H.pCG(grad,10,2,tol=1e-3,itmax=10);
-itmax = 50; # Number of epoch.
+itmax = 200; # Number of epoch.
 for it in tqdm(range(itmax)):
     x = x - tf.constant(step_size,dtype=np.float32)*tf.Variable(q,dtype=np.float32);
     x =  tf.Variable(x)
