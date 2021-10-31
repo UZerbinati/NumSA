@@ -84,7 +84,7 @@ def test_sym_Hessian():
         # Compute the loss value for this minibatch.
         loss_value = loss_fn(training_label, predictions);
         return loss_value;
-    H = Hessian(Loss,model.trainable_weights)
+    H = Hessian(Loss,model.trainable_weights,"KERAS")
     fullH = H.mat();
     assert np.linalg.norm(fullH-fullH.T) < 1e-4;
 
@@ -113,7 +113,7 @@ def test_prod_Hessian():
     for epoch in range(1):
         for step, (x,y) in enumerate(training_dataset):
             # Compute Hessian and Gradients
-            H = Hessian(Loss,model.trainable_weights)
+            H = Hessian(Loss,model.trainable_weights,"KERAS")
             fullH = H.mat();
             with tf.GradientTape() as tape:
                 # Run the forward pass of the layer.

@@ -181,13 +181,21 @@ class Hessian:
             print("MPI the world is {} process big !".format(nprs));
         rank = comm.Get_rank();
 
-        N = util_shape_product([layer.shape for layer in model_weights]);
+        if self.flag == "KERAS":
+            N = util_shape_product([layer.shape for layer in model_weights]);
+        else:
+            N = model_weights.shape[0];
         matH = np.zeros((N,N),dtype=np.float32);
         Grad = np.zeros((N,),dtype=np.float32);
         if self.flag == "KERAS":
             NBase = util_shape_product([layer.shape for layer in model_weights]);
             for k in range(NBase):
                 v = np.zeros((NBase,));
+                v[k] = 1.
+                matH[:,k] = self.vecprod(v);
+        else:
+            for k in range(N):
+                v = np.zeros((N,));
                 v[k] = 1.
                 matH[:,k] = self.vecprod(v);
         return matH;

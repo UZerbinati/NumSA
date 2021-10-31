@@ -10,13 +10,14 @@ setup(
     packages=['numsa'],
     package_data={'': ['*.so']},
     include_package_data=True,
-    install_requires=['numpy~=1.19.2',
+    install_requires=['numpy',
+    		  'tqdm',
     		  'matplotlib',
     		  'pytest',
     		  'mpi4py'],
     extras_require={
-    	'Notebooks': ['tqdm'],
     	'Hessian': ['tensorflow'],
-    	'FEM': ['pygmsh'],
+    	'FEM': ['petsc4py',
+    	        'slepc5py'],
     }
 )
