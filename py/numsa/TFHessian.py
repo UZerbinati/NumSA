@@ -13,6 +13,25 @@ def util_shape_product(Layers):
         elif len(layer)==1:
             N = N+layer[0];
     return N;
+
+def SingularCompression(A,l):
+    N = A.shape[0];
+    mu, sigma = 0, 1 # mean and standard deviation
+    omega = np.random.normal(mu, sigma, (N,l))
+    Y = A@omega; 
+    #HALKO 4.1
+    #
+    #(N,l) Y = A * Omega (N,N)(N,l)
+    #(N,l)(l,l) QR = Y (N,l)
+    #(l,N) B = Q^t A (l,N)(N,N)
+    #Bt = A^t Q = AQ
+    #USV^t = B
+    Q,R = la.qr(Y);
+    Bt = A@Q;
+    B = Bt.T
+    U, sigma, Vt = la.svd(B, full_matrices=False); 
+    return Q@U, sigma, Vt;
+
 class Hessian:
     """
     This class has been created to work with Hessians in TensorFlow.
@@ -27,6 +46,8 @@ class Hessian:
         self.x0 = where;
         self.SwitchVerbose(False);
         self.comm = MPI.COMM_WORLD;
+        self.loc = False;
+        self.memory = 0;
     def SwitchVerbose(self,state):
         self.verbose = state;
         if not(state):
@@ -66,6 +87,8 @@ class Hessian:
                     LossEvaluation = self.LossFunction(self.x0,comm)
                     backward = tape.gradient(LossEvaluation, self.x0);
                     #print("gradient: ",backward)
+            if self.loc == True:
+                return acc.jvp(backward);
             Hvs = comm.gather(acc.jvp(backward), root=0);
             Grads = comm.gather(backward,root=0); 
             if self.flag=="KERAS":
@@ -216,8 +239,6 @@ class Hessian:
         for j in range(1,Krylov):
             for i in range(l):
                 Y[:,j*l+i] = self.vecprod(Y[:,(j-1)*l+i].reshape(N,1))
-        
-        Q,R = la.qr(Y);
         #HALKO 4.1
         #
         #(N,l) Y = A * Omega (N,N)(N,l)
@@ -230,10 +251,7 @@ class Hessian:
             Bt[:,i] = self.vecprod(Q[:,i])
         B = Bt.T
         U, sigma, Vt = la.svd(B, full_matrices=False); 
-        if Krylov == 1:
-            return Q @ U, sigma, Vt;
-        else:
-            return U, sigma, Vt;
+        return Q @ U, sigma, Vt;
     def pCG(self,b,k,p,itmax=1000,tol=1e-8,KOrd=1,mu=0,var=1):
         model_weights = self.x0;
         if self.flag=="KERAS":
@@ -378,3 +396,17 @@ class Hessian:
                 return sum(matH);
             else:
                 return 1;
+
+    def shift(self,xnew,opt={"comp": lambda x,l: x,"rk":0}):
+        self.loc = True;
+        if self.memory == 0:
+            self.memH = np.identity(self.x0.shape[0]);
+            self.x0 = xnew;
+            self.memory = self.memory + 1;
+            tbcomp = self.mat()-self.memH;
+            return opt["comp"](tbcomp,opt["rk"]);
+        if self.memory != 0:
+            self.x0 = xnew;
+            self.memory = self.memory + 1;
+            tbcomp = self.mat()-self.memH;
+            return opt["comp"](tbcomp,opt["rk"]);

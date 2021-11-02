@@ -1,3 +1,4 @@
+import pytest
 #STDLIB
 from math import pi
 
@@ -6,16 +7,14 @@ from netgen.geom2d import unit_square
 from ngsolve import *
 from numsa.NGSlepc import *
 from mpi4py import MPI
+
 comm = MPI.COMM_WORLD
 rank = comm.rank
 npro = comm.size
-H = []
-E = []
-for k in range(2,4):
-    print (rank, npro)
-    print("Mesh N. {}".format(k))
-    h = 2**(-k);
-    H = H + [h]; 
+
+@pytest.mark.mpi
+def test_mpi():
+    h = 1e-2;
     if comm.rank == 0:
         ngmesh = unit_square.GenerateMesh(maxh=h).Distribute(comm)
     else:
@@ -49,7 +48,4 @@ for k in range(2,4):
     EP.Solve()
     
     lam, gfur, gfui = EP.getPairs(fes) 
-    print([l/pi**2 for l in lam])
-    E = E + [abs(lam[0]/pi**2-2)];
-    
-print(E)
+    assert (abs(lam[0]/pi**2-2)<1e-3)

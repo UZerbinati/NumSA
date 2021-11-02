@@ -14,7 +14,8 @@ setup(
     		  'tqdm',
     		  'matplotlib',
     		  'pytest',
-    		  'mpi4py'],
+    		  'mpi4py',
+    		  'pytest-mpi'],
     extras_require={
     	'Hessian': ['tensorflow'],
     	'FEM': ['petsc4py',
