@@ -400,13 +400,11 @@ class Hessian:
     def shift(self,xnew,opt={"comp": lambda x,l: x,"rk":0}):
         self.loc = True;
         if self.memory == 0:
-            self.memH = np.identity(self.x0.shape[0]);
+            self.memH = self.mat();
+            self.loc=False;
+        else:
             self.x0 = xnew;
             self.memory = self.memory + 1;
             tbcomp = self.mat()-self.memH;
-            return opt["comp"](tbcomp,opt["rk"]);
-        if self.memory != 0:
-            self.x0 = xnew;
-            self.memory = self.memory + 1;
-            tbcomp = self.mat()-self.memH;
+            self.loc = False;
             return opt["comp"](tbcomp,opt["rk"]);
