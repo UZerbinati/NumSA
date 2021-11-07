@@ -14,24 +14,6 @@ def util_shape_product(Layers):
             N = N+layer[0];
     return N;
 
-def SingularCompression(A,l):
-    N = A.shape[0];
-    mu, sigma = 0, 1 # mean and standard deviation
-    omega = np.random.normal(mu, sigma, (N,l))
-    Y = A@omega; 
-    #HALKO 4.1
-    #
-    #(N,l) Y = A * Omega (N,N)(N,l)
-    #(N,l)(l,l) QR = Y (N,l)
-    #(l,N) B = Q^t A (l,N)(N,N)
-    #Bt = A^t Q = AQ
-    #USV^t = B
-    Q,R = la.qr(Y);
-    Bt = A@Q;
-    B = Bt.T
-    U, sigma, Vt = la.svd(B, full_matrices=False); 
-    return Q@U, sigma, Vt;
-
 class Hessian:
     """
     This class has been created to work with Hessians in TensorFlow.
@@ -397,14 +379,32 @@ class Hessian:
             else:
                 return 1;
 
-    def shift(self,xnew,opt={"comp": lambda x,l: x,"rk":0}):
+    def shift(self,xnew,opt={"comp": lambda x,l: x,"rk":0,"type":"mat"},verbose=False):
         self.loc = True;
         if self.memory == 0:
-            self.memH = self.mat();
+            # If the Hessian has is memoryless we load the Hessian with in the memory
+            self.x0 = xnew;
+
+            if opt["type"] == "mat":
+                self.memH = self.mat();
+
+            self.memory = self.memory + 1;
             self.loc=False;
         else:
             self.x0 = xnew;
             self.memory = self.memory + 1;
-            tbcomp = self.mat()-self.memH;
+            if opt["type"] == "mat":
+                tbcomp = self.mat()-self.memH;
+            if verbose:
+                if opt["type"] == "mat":
+                    print("[Shifter] Frobenious norm of the operator to be compresed is {}".format(np.linalg.norm(tbcomp,ord='fro')));
             self.loc = False;
             return opt["comp"](tbcomp,opt["rk"]);
+
+def MatSVDComp(A,l):
+    N = A.shape[0];
+    U, sigma, Vt = la.svd(A, full_matrices=False); 
+    sigma = sigma[0:l];
+    U = U[:,0:l];
+    Vt = Vt[0:l,:];
+    return U, sigma, Vt;

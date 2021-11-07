@@ -38,7 +38,7 @@ def Loss(x,comm):
     return S
 ################! Setting Of The Solver!##################
 itmax = 50
-tol = 1e-8;
+tol = 1e-4;
 step_size=1;
 ###########################################################
 x = tf.Variable(0.1*np.ones((119,1),dtype=np.float32))
@@ -86,6 +86,3 @@ for it in tqdm(range(itmax)):
         x =  tf.Variable(x)
     #Distributing the search direction
     x = H.comm.bcast(x,root=0)
-
-
-print("Lost funciton at this iteration {}  and gradient norm {}".format(Loss(x,H.comm),np.linalg.norm(grad)))
