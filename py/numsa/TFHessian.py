@@ -379,14 +379,17 @@ class Hessian:
             else:
                 return 1;
 
-    def shift(self,xnew,opt={"comp": lambda x,l: x,"rk":0,"type":"mat"},verbose=False):
+    def shift(self,xnew,opt={"comp": lambda x,l: x,"rk":0,"type":"mat"},start=None):
         self.loc = True;
         if self.memory == 0:
             # If the Hessian has is memoryless we load the Hessian with in the memory
             self.x0 = xnew;
 
             if opt["type"] == "mat":
-                self.memH = self.mat();
+                if not (type(start) is np.ndarray):
+                    self.memH = self.mat();
+                else:
+                    self.memH = start;
 
             self.memory = self.memory + 1;
             self.loc=False;
@@ -395,7 +398,7 @@ class Hessian:
             self.memory = self.memory + 1;
             if opt["type"] == "mat":
                 tbcomp = self.mat()-self.memH;
-            if verbose:
+            if self.verbose:
                 if opt["type"] == "mat":
                     print("[Shifter] Frobenious norm of the operator to be compresed is {}".format(np.linalg.norm(tbcomp,ord='fro')));
             self.loc = False;
@@ -408,3 +411,11 @@ def MatSVDComp(A,l):
     U = U[:,0:l];
     Vt = Vt[0:l,:];
     return U, sigma, Vt;
+def MatSVDCompDiag(A,l):
+    N = A.shape[0];
+    U, sigma, Vt = la.svd(A, full_matrices=False); 
+    sigma = sigma[0:l];
+    U = U[:,0:l];
+    Vt = Vt[0:l,:];
+    ell = np.linalg.norm(A,ord="fro");
+    return U, sigma, Vt,ell;
