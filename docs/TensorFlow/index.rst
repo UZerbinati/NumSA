@@ -7,3 +7,4 @@ TensorFlow
    MNIST.ipynb
    RandomSVD.ipynb
    NewtonMethod.ipynb
+   FEDNL.ipynb
