@@ -2,6 +2,7 @@ import tensorflow as tf
 import numpy as np
 import numpy.linalg as la
 import sys
+from copy import copy
 from mpi4py import MPI
 from tqdm import tqdm
 
@@ -390,6 +391,8 @@ class Hessian:
                     self.memH = self.mat();
                 else:
                     self.memH = start;
+            if opt["type"] == "act":
+                self.memH = lambda v: v;
 
             self.memory = self.memory + 1;
             self.loc=False;
@@ -398,12 +401,45 @@ class Hessian:
             self.memory = self.memory + 1;
             if opt["type"] == "mat":
                 tbcomp = self.mat()-self.memH;
+            elif opt["type"] == "act":
+                # We define the action that has to be compressed
+                def tbcomp(v):
+                    return (self.vecprod(v).reshape(xnew.shape)-self.memH(v).reshape(xnew.shape));
+
             if self.verbose:
                 if opt["type"] == "mat":
                     print("[Shifter] Frobenious norm of the operator to be compresed is {}".format(np.linalg.norm(tbcomp,ord='fro')));
+                else:
+                    print("[Shifter] to be compressed".format(tbc));
             self.loc = False;
-            return opt["comp"](tbcomp,opt["rk"]);
-
+            if opt["type"] == "mat":
+                return opt["comp"](tbcomp,opt["rk"]);
+            elif opt["type"] == "act":
+                if self.flag == "KERAS":
+                    N = util_shape_product([layer.shape for layer in self.x0]);
+                else:
+                    N = self.x0.shape[0];
+                return opt["comp"](tbcomp,N,opt["rk"]);
+def ActHalko(F,N,l):
+    mu, sigma = 0, 1 # mean and standard deviation
+    omega = np.random.normal(mu, sigma, (N,l))
+    Y = np.zeros((N,l));
+    Bt = np.zeros((N,l));
+    for i in range(l):
+            Y[:,i] = F(omega[:,i].reshape(N,1)).reshape(N,);
+    #HALKO 4.1
+    #
+    #(N,l) Y = A * Omega (N,N)(N,l)
+    #(N,l)(l,l) QR = Y (N,l)
+    #(l,N) B = Q^t A (l,N)(N,N)
+    #Bt = A^t Q = AQ
+    #USV^t = B
+    Q,R = la.qr(Y);
+    for i in range(l):
+        Bt[:,i] = F(Q[:,i]).reshape(N,);
+    B = Bt.T
+    U, sigma, Vt = la.svd(B, full_matrices=False); 
+    return Q @ U, sigma, Vt;
 def MatSVDComp(A,l):
     N = A.shape[0];
     U, sigma, Vt = la.svd(A, full_matrices=False); 
