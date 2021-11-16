@@ -56,6 +56,8 @@ class Hessian:
         """
         If the grad option is True, also the gradient is returned.
         """
+        if self.verbose:
+            print("[Hessian Action] Computing the Hessian action ...");
         comm = self.comm;
         nprs = comm.Get_size()
         rank = comm.Get_rank()
@@ -171,6 +173,8 @@ class Hessian:
                 tindex = tindex+util_shape_product([model_weights[s+1].shape])
             u[bindex:tindex] = layerH[-1].numpy().reshape(util_shape_product([model_weights[-1].shape]));
         else:
+            if self.verbose:
+                print("[Hv] Hessian Vector product ...");
             wtf =  tf.Variable(w,dtype=np.float32);
             wtf = tf.reshape(wtf,(w.shape[0],)) 
             u = self.action(wtf).numpy().reshape((w.shape[0],));
@@ -265,6 +269,46 @@ class Hessian:
             if (la.norm(rr)<tol):
                 return x;
             zz = Vt.T@(np.diag(invsig)@(U.T@rr));
+            beta = (rr.T@zz)/(r.T@z);
+            r = rr;
+            z = zz;
+            p = z+beta*p;
+            if self.verbose == True:
+                print("Iteration {} residual {}, alpha {}".format(k,la.norm(r)/la.norm(x),alpha[0][0]));
+        print("Max itetation reached !");
+        return x;
+    def explicitPCG(self,b,P,itmax=1000,tol=1e-8,mu=0.0,var=1.0):
+        print("We are inside the eplicit PCG");
+        model_weights = self.x0;
+        if self.flag=="KERAS":
+            N = util_shape_product([layer.shape for layer in model_weights]);
+        else:
+            N = model_weights.shape[0];
+        #We now build the preconditioner 
+        print("Drawing random initial sample, sample of length {}".format(N));
+        x = np.random.normal(mu,var,(N,1));
+        print("Computing the first residual");
+        print("b ",b.shape);
+        print("ones ",np.ones((N,1)).shape)
+        self.loc =  False
+        print("Hv ",self.vecprod(np.ones(N,1)).shape);
+        r = b - self.vecprod(x).reshape(N,1);
+        print("Before using matrix P vector product");
+        z = P@r;
+        print("After using matrix P vector product");
+        p = z;
+        for k in range(itmax):
+            q = self.vecprod(p).reshape(N,1);
+            alpha = (r.T@z)/(p.T@q);
+            if alpha[0][0] < 0:
+                if self.verbose == True:
+                    print("Iteration {} residual {}, alpha {} < 0".format(k,la.norm(r)/la.norm(x),alpha[0][0]));
+                return x;
+            x = x + alpha*p;
+            rr = r - alpha*q;
+            if (la.norm(rr)<tol):
+                return x;
+            zz = P.T@rr;
             beta = (rr.T@zz)/(r.T@z);
             r = rr;
             z = zz;
@@ -410,7 +454,7 @@ class Hessian:
                 if opt["type"] == "mat":
                     print("[Shifter] Frobenious norm of the operator to be compresed is {}".format(np.linalg.norm(tbcomp,ord='fro')));
                 else:
-                    print("[Shifter] to be compressed".format(tbc));
+                    print("[Shifter] Compressing");
             self.loc = False;
             if opt["type"] == "mat":
                 return opt["comp"](tbcomp,opt["rk"]);

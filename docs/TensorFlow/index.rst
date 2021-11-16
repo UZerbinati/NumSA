@@ -9,3 +9,4 @@ TensorFlow
    NewtonMethod.ipynb
    FEDNL.ipynb
    FEDQNL.ipynb
+   PDE-NN.ipynb
