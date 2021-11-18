@@ -57,7 +57,8 @@ class Hessian:
         If the grad option is True, also the gradient is returned.
         """
         if self.verbose:
-            print("[Hessian Action] Computing the Hessian action ...");
+            pass
+            #print("[Hessian Action] Computing the Hessian action ...");
         comm = self.comm;
         nprs = comm.Get_size()
         rank = comm.Get_rank()
@@ -174,7 +175,8 @@ class Hessian:
             u[bindex:tindex] = layerH[-1].numpy().reshape(util_shape_product([model_weights[-1].shape]));
         else:
             if self.verbose:
-                print("[Hv] Hessian Vector product ...");
+                pass
+                #print("[Hv] Hessian Vector product ...");
             wtf =  tf.Variable(w,dtype=np.float32);
             wtf = tf.reshape(wtf,(w.shape[0],)) 
             u = self.action(wtf).numpy().reshape((w.shape[0],));
