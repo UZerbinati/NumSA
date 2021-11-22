@@ -233,6 +233,6 @@ def compareNL(b,bias):
     ax.legend(["Quasi Newton Rank 80 WK. 2","FEDQNL Rank 1 WK. 2"])
     ax.set_xscale("log", base=2)
     ax.set_yscale("log", base=10)
-    ax.set_title("Communication Volume")
+    ax.set_title("Memory Foorprint")
     ax.set_xlabel("MB")
     ax.set_ylabel(r"$|\mathcal{L}(x^k)-\mathcal{L}(x^*)|$")
