@@ -241,6 +241,40 @@ class Hessian:
         B = Bt.T
         U, sigma, Vt = la.svd(B, full_matrices=False); 
         return Q @ U, sigma, Vt;
+    def CG(self,b,itmax=1000,rtol=1e-8,atol=1e-8):
+        mu = 0;
+        var = 1;
+        model_weights = self.x0;
+        if self.flag=="KERAS":
+            N = util_shape_product([layer.shape for layer in model_weights]);
+        else:
+            N = model_weights.shape[0];
+        x = np.zeros((N,1));
+        r = b - self.vecprod(x).reshape(N,1);
+        normb = la.norm(r);
+        print("\t [CG] Residual at it {} is {}.".format(0,np.linalg.norm(r)))
+        p = r;
+        for k in range(itmax):
+            q = self.vecprod(p).reshape(N,1);
+            alpha = (r.T@r)/(p.T@q);
+            if alpha[0][0] < 0:
+                if self.verbose == 1:
+                    print("[CG] Number of iterations {}, negative search direction found.".format(k+1)); 
+                return x;
+            x = x + alpha*p;
+            rr = r - alpha*q;
+            print("\t [CG] Residual at it {} is {}.".format(k+1,np.linalg.norm(rr)))
+            if (la.norm(rr)<rtol*normb or la.norm(rr)<atol):
+                if self.verbose == 1:
+                    print("[CG] Number of iterations {}.".format(k+1)); 
+                return x;
+            beta = (rr.T@rr)/(r.T@r);
+            r = rr;
+            p = r+beta*p;
+        if self.verbose == 1:
+            print("[CG] Maximal number of iterations {}.".format(k+1)); 
+        return x;
+
     def pCG(self,b,k,p,itmax=1000,tol=1e-8,KOrd=1,mu=0,var=1):
         model_weights = self.x0;
         if self.flag=="KERAS":
@@ -263,7 +297,7 @@ class Hessian:
             q = self.vecprod(p).reshape(N,1);
             alpha = (r.T@z)/(p.T@q);
             if alpha[0][0] < 0:
-                if self.verbose == True:
+                if self.verbose == 2:
                     print("Iteration {} residual {}, alpha {} < 0".format(k,la.norm(r)/la.norm(x),alpha[0][0]));
                 return x;
             x = x + alpha*p;
@@ -275,32 +309,25 @@ class Hessian:
             r = rr;
             z = zz;
             p = z+beta*p;
-            if self.verbose == True:
+            if self.verbose == 2:
                 print("Iteration {} residual {}, alpha {}".format(k,la.norm(r)/la.norm(x),alpha[0][0]));
-        print("Max itetation reached !");
+        if self.verbose == 1:
+            print("[CG] Number of iterations {}.".format(k)); 
         return x;
     def explicitPCG(self,b,P,itmax=1000,tol=1e-8,mu=0.0,var=1.0):
-        print("We are inside the eplicit PCG");
         model_weights = self.x0;
         if self.flag=="KERAS":
             N = util_shape_product([layer.shape for layer in model_weights]);
         else:
             N = model_weights.shape[0];
         #We now build the preconditioner 
-        print("Drawing random initial sample, sample of length {}".format(N));
         x = np.random.normal(mu,var,(N,1));
-        print("Computing the first residual");
-        print("b ",b.shape);
-        print("ones ",np.ones((N,1)).shape)
         self.loc =  False
-        print("Hv ",self.vecprod(np.ones(N,1)).shape);
-        r = b - self.vecprod(x).reshape(N,1);
-        print("Before using matrix P vector product");
+        r = b - self.vecprod(x).reshape((N,1));
         z = P@r;
-        print("After using matrix P vector product");
         p = z;
         for k in range(itmax):
-            q = self.vecprod(p).reshape(N,1);
+            q = self.vecprod(p).reshape((N,1));
             alpha = (r.T@z)/(p.T@q);
             if alpha[0][0] < 0:
                 if self.verbose == True:
@@ -317,7 +344,6 @@ class Hessian:
             p = z+beta*p;
             if self.verbose == True:
                 print("Iteration {} residual {}, alpha {}".format(k,la.norm(r)/la.norm(x),alpha[0][0]));
-        print("Max itetation reached !");
         return x;
     def eig(self,flag,itmax=10):
         if flag == "pi-max":
@@ -438,7 +464,7 @@ class Hessian:
                 else:
                     self.memH = start;
             if opt["type"] == "act":
-                self.memH = lambda v: v;
+                self.memH = start;
 
             self.memory = self.memory + 1;
             self.loc=False;
@@ -451,7 +477,7 @@ class Hessian:
                 # We define the action that has to be compressed
                 def tbcomp(v):
                     return (self.vecprod(v).reshape(xnew.shape)-self.memH(v).reshape(xnew.shape));
-
+                #print("Test TBC aginst vector of 1s: ", np.linalg.norm(tbcomp(np.ones(xnew.shape))))
             if self.verbose:
                 if opt["type"] == "mat":
                     print("[Shifter] Frobenious norm of the operator to be compresed is {}".format(np.linalg.norm(tbcomp,ord='fro')));
