@@ -108,7 +108,7 @@ def compareNL(b,bias):
         return new_values;
 
     fig,ax = plt.subplots()
-    ax.semilogy(VanillaNewtonLIT[b:],VanillaNewtonErr[b:],"o-")
+    ax.semilogy(range(len(VanillaNewtonLIT[b:])),VanillaNewtonErr[b:],"o-")
     ax.semilogy(range(FEDNL2It+1)[b:],FEDNL2Err[b:],"o-")
     ax.set_yscale("log", base=10)
     ax.legend(["Newton Method WK. 2","FEDNL Rank 1 WK. 2","Quasi Newton Rank 80 WK. 2"])
