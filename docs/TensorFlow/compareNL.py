@@ -102,6 +102,22 @@ def compareNL(b,bias):
     for l in range(FEDQNLLIT):
         FEDQNLMeM = FEDQNLMeM + [(l+1)*4*(FEDQNLWk*d*FEDQNLHalkoRank+2*d*FEDQNLHalkoRank)+4*FEDQNLInitRank*d*2+4*FEDQNLLIT];
     FEDQNLMeM=[bias]+FEDQNLMeM;
+    #############################| FEDNL LR+Diag WK 2|##############################
+    FEDNLHalkoRank = 1;
+    FEDNLWk = 2;
+    FEDNLInitRank = 40;
+    FEDNLLIT = 12;
+    FEDNLErr = [0.93067896, 0.023690343, 0.0041193664, 0.001616329, 0.0007453859, 0.00017392635, 4.2408705e-05, 
+    	      1.1056662e-05, 3.6656857e-06, 1.2814999e-06, 4.172325e-07, 1.7881393e-07,8.940696716308594e-08]
+    FEDNLCOM = [];
+    FEDNLMeM = [];
+    for l in range(FEDNLLIT):
+        FEDNLCOM = FEDNLCOM + [l*4*d*2*FEDNLHalkoRank+d*FEDNLInitRank*4];
+    FEDNLCOM=[bias]+FEDNLCOM;
+    
+    for l in range(FEDNLLIT):
+        FEDNLMeM = FEDNLMeM + [(l+1)*4*(FEDNLWk*d*FEDNLHalkoRank+2*d*FEDNLHalkoRank)+4*FEDNLInitRank*d*2+4*FEDNLLIT];
+    FEDNLMeM=[bias]+FEDNLMeM;
 
     def B2MB(values):
         new_values = [1e-6*v for v in values];
@@ -110,18 +126,35 @@ def compareNL(b,bias):
     fig,ax = plt.subplots()
     ax.semilogy(range(len(VanillaNewtonLIT[b:])),VanillaNewtonErr[b:],"o-")
     ax.semilogy(range(FEDNL2It+1)[b:],FEDNL2Err[b:],"o-")
+    ax.semilogy(range(QuasiNewton80LIT)[b:],QuasiNewton80Err[b:],"o-")
+    ax.semilogy(range(FEDNLLIT+1)[b:],FEDNLErr[b:],"o-")
     ax.set_yscale("log", base=10)
-    ax.legend(["Newton Method WK. 2","FEDNL Rank 1 WK. 2","Quasi Newton Rank 80 WK. 2"])
+    ax.legend(["Newton-CG WK. 2","FEDNL Rank 1 WK. 2","Newton-LR 80 WK.2","FEDNL-LR+D Rank 1 WK.2"])
     ax.set_title("Iteration To Convergence")
     ax.set_xlabel("Iterations")
     ax.set_ylabel(r"$|\mathcal{L}(x^k)-\mathcal{L}(x^*)|$")
+    
+    fig,ax = plt.subplots()
+    objects = ["Newton-CG","FEDNL RK 1","Newton-LR 80","FEDNL-LR40+D RK 1"]
+    y_pos = np.arange(len(objects))
+    mem = [1e-6*(3*d*4),1e-6*(3*d+d**2)*4,1e-6*(d*QuasiNewton80HalkoRank*4+d*4),1e-6*((3*d+d*FEDNLInitRank*2)*4)]
 
+    ax.barh(y_pos[0], mem[0], align='center', alpha=0.9)
+    ax.barh(y_pos[1], mem[1], align='center', alpha=0.9)
+    ax.barh(y_pos[2], mem[2], align='center', alpha=0.9)
+    ax.barh(y_pos[3], mem[3], align='center', alpha=0.9)
+    ax.set_yticks(y_pos, labels=objects)
+    ax.set_xlabel('MB')
+    ax.set_xscale("log", base=2)
+    ax.set_aspect('equal', 'box')
+    ax.set_title('Memory Footprint')
+    
     fig,ax = plt.subplots()
     ax.semilogy(B2MB(VanillaNewtonCOM[b:]),VanillaNewtonErr[b:],"o-")
     ax.semilogy(B2MB(FEDNL2COM[b:]),FEDNL2Err[b:],"o-")
     ax.set_xscale("log", base=2)
     ax.set_yscale("log", base=10)
-    ax.legend(["Newton Method WK. 2","FEDNL Rank 1 WK. 2","Quasi Newton Rank 80 WK. 2"])
+    ax.legend(["Newton-CG WK. 2","FEDNL Rank 1 WK. 2"])
     ax.set_title("Communication Volume")
     ax.set_xlabel("MB")
     ax.set_ylabel(r"$|\mathcal{L}(x^k)-\mathcal{L}(x^*)|$")
@@ -131,7 +164,7 @@ def compareNL(b,bias):
     ax.semilogy(B2MB(FEDNL2MeM[b:]),FEDNL2Err[b:],"o-")
     ax.set_xscale("log", base=2)
     ax.set_yscale("log", base=10)
-    ax.legend(["Newton Method WK. 2","FEDNL Rank 1 WK. 2","Quasi Newton Rank 80 WK. 2"])
+    ax.legend(["Newton CG WK. 2","FEDNL Rank 1 WK. 2","Quasi Newton Rank 80 WK. 2"])
     ax.set_title("Memory Footprint")
     ax.set_xlabel("MB")
     ax.set_ylabel(r"$|\mathcal{L}(x^k)-\mathcal{L}(x^*)|$")
@@ -140,8 +173,8 @@ def compareNL(b,bias):
 
 
     fig,ax = plt.subplots()
-    ax.semilogy(range(QuasiNewton80LIT)[b:],QuasiNewton80Err[b:],"o-")
-    ax.semilogy(range(FEDNL2It+1)[b:],FEDNL2Err[b:],"o-")
+    ax.semilogy(range(QuasiNewton80LIT)[b:],QuasiNewton80Err[b:],"o-",color="green")
+    ax.semilogy(range(FEDNL2It+1)[b:],FEDNL2Err[b:],"o-",color="orange")
     ax.legend(["Quasi Newton Method WK. 2","FEDNL Rank 1 WK. 2"])
     ax.set_yscale("log", base=10)
     ax.xaxis.set_major_locator(MaxNLocator(integer=True))
@@ -150,9 +183,9 @@ def compareNL(b,bias):
     ax.set_ylabel(r"$|\mathcal{L}(x^k)-\mathcal{L}(x^*)|$")
 
     fig,ax = plt.subplots()
-    ax.semilogy(B2MB(QuasiNewton80COM[b:]),QuasiNewton80Err[b:],"o-")
-    ax.semilogy(B2MB(FEDNL2COM[b:]),FEDNL2Err[b:],"o-")
-    ax.legend(["Quasi Newton Method WK. 2","FEDNL Rank 1 WK. 2"])
+    ax.semilogy(B2MB(QuasiNewton80COM[b:]),QuasiNewton80Err[b:],"o-",color="green")
+    ax.semilogy(B2MB(FEDNL2COM[b:]),FEDNL2Err[b:],"o-",color="orange")
+    ax.legend(["Newton-LR 80 WK.2","FEDNL Rank 1 WK. 2"])
     ax.set_xscale("log", base=2)
     ax.set_yscale("log", base=10)
     ax.set_title("Communication Volume")
@@ -160,8 +193,8 @@ def compareNL(b,bias):
     ax.set_ylabel(r"$|\mathcal{L}(x^k)-\mathcal{L}(x^*)|$")
 
     fig,ax = plt.subplots()
-    ax.semilogy(B2MB(QuasiNewton80MeM[b:]),QuasiNewton80Err[b:],"o-")
-    ax.semilogy(B2MB(FEDNL2MeM[b:]),FEDNL2Err[b:],"o-")
+    ax.semilogy(B2MB(QuasiNewton80MeM[b:]),QuasiNewton80Err[b:],"o-",color="green")
+    ax.semilogy(B2MB(FEDNL2MeM[b:]),FEDNL2Err[b:],"o-",color="orange")
     ax.legend(["Quasi Newton Method WK. 2","FEDNL Rank 1 WK. 2"])
     ax.set_xscale("log", base=2)
     ax.set_yscale("log", base=10)
@@ -236,3 +269,16 @@ def compareNL(b,bias):
     ax.set_title("Memory Foorprint")
     ax.set_xlabel("MB")
     ax.set_ylabel(r"$|\mathcal{L}(x^k)-\mathcal{L}(x^*)|$")
+    
+    fig,ax = plt.subplots()
+    ax.semilogy(B2MB(QuasiNewton80COM[b:]),QuasiNewton80Err[b:],"o-",color="green")
+    ax.semilogy(B2MB(FEDNL2COM[b:]),FEDNL2Err[b:],"o-",color="orange")
+    ax.semilogy(B2MB(FEDNLCOM[b:]),FEDNLErr[b:],"o-",color="red")
+    ax.legend(["Newton-LR 80 WK.2","FEDNL Rank 1 WK. 2","FEDNL LR+D Rank 1 WK.2"])
+    ax.set_xscale("log", base=2)
+    ax.set_yscale("log", base=10)
+    ax.set_title("Communication Volume")
+    ax.set_xlabel("MB")
+    ax.set_ylabel(r"$|\mathcal{L}(x^k)-\mathcal{L}(x^*)|$")
+    
+    plt.show()
