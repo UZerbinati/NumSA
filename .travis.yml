@@ -10,8 +10,8 @@ services:
 before_install: 
         - pyenv global 3.8
         - cd py
-        - pip3 -q install .
-        - pip3 -q install .[Hessian]
+        - pip -q install .
+        - pip -q install .[Hessian]
 script: 
         - cd ..
         - cd tests
