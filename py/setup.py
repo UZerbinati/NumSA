@@ -19,6 +19,7 @@ setup(
     extras_require={
     	'Hessian': ['tensorflow'],
     	'FEM': ['petsc4py',
-    	        'slepc5py'],
+    	        'slepc5py',
+    	        'ngsolve'],
     }
 )

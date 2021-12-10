@@ -9,13 +9,9 @@ services:
   - xvfb
 before_install: 
         - pyenv global 3.8
-        - sudo apt update
-        - sudo apt install libopenmpi-dev
         - cd py
         - pip3 -q install .
         - pip3 -q install .[Hessian]
-        - pip3 -q install .[Notebook]
-        - pip3 -q install .[FEM]
 script: 
         - cd ..
         - cd tests
